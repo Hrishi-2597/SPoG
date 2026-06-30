@@ -131,6 +131,48 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+---
+
+## UI Overhaul (2026-06-30) — Changes Applied
+
+### Font: Space Grotesk
+**Decision:** Replaced `Segoe UI, system-ui` with Space Grotesk (Google Fonts, 300–700 weight range).
+**Why:** Segoe UI is a neutral system font with no personality. Space Grotesk is geometric and slightly technical — it signals "data tool" without feeling cold. `font-variant-numeric: tabular-nums` applied globally so all numbers in tables and cards align in columns.
+
+### Signature Element: Luminous Card Top-Edge Glow
+**Decision:** CSS `::before` pseudo-element on every KPI card — a `linear-gradient(90deg, transparent, #38bdf8, transparent)` line at the top that fans out (left/right bounds expand) and increases opacity on hover; full-width with box-shadow glow when active.
+**Why:** Operations dashboards need to communicate "this data is live". The glow treatment makes cards feel like illuminated data panels without adding animation overhead. It's the one memorable thing in the design — everything else is quiet.
+
+### Filter Dropdowns: Dark `.select-dark`
+**Decision:** Removed `bg-white text-gray-800` from filter selects. Created `.select-dark` CSS class: `background: #0c1929`, accent-colored SVG chevron, translucent border, focus ring.
+**Why:** White dropdowns in a dark dashboard are a visual scream. This was the single biggest regression in the original design.
+
+### Layer Headers: Accent Left-Border + Numbered Badges
+**Decision:** Each layer has a `2px solid #38bdf8` left border, horizontal gradient background, and a colored number badge (`01` in accent blue, `02` in teal-green, `03` in orange).
+**Why:** The original `Layer 1 / Layer 2 / Layer 3` labels had no visual weight. The numbered badge creates hierarchy and lets the eye navigate to sections quickly. Three different badge colors distinguish the layers at a glance.
+
+### Chart Panels: `.chart-panel` Dark Inset
+**Decision:** Chart visual containers now use `background: #0a1522` (darker than the layer surface) with `border: 1px solid rgba(255,255,255,0.06)`.
+**Why:** Creates visible depth — the layer container → chart panel → chart itself has three distinct tonal levels. Charts no longer float on flat surfaces.
+
+### Pill DrillToggle
+**Decision:** FY/Quarter/Week segmented control changed from rectangular box buttons to a pill container with rounded buttons. Active state: `background: #38bdf8; color: #070f1a`.
+**Why:** The rectangle toggle had no roundness and looked like a table row. The pill form is a standard pattern for mutually-exclusive quick filters and reads as interactive at a glance.
+
+### Recharts Axis Cleanup
+**Decision:** Removed `axisLine` and `tickLine` from all XAxis/YAxis. Reduced CartesianGrid to `rgba(255,255,255,0.05)` strokeDasharray `2 4`. Added `maxBarSize` cap on all bars.
+**Why:** Axis lines double-draw the chart border and add visual noise. With a dark background, tick marks alone are sufficient for reference. Capping bar size prevents bars from becoming wall-to-wall at low data counts.
+
+### Tooltip: Backdrop Blur + Accent Border
+**Decision:** `.chart-tooltip` uses `backdrop-filter: blur(8px)`, `background: rgba(12,25,41,0.96)`, `border: 1px solid rgba(56,189,248,0.25)`.
+**Why:** Glassmorphism on the tooltip keeps it legible without completely blocking the chart behind it. The accent border connects it visually to the hovered data point.
+
+### Geo Map Marker Glow
+**Decision:** SVG `filter: drop-shadow(0 0 6px <color>)` on each accuracy circle, with glow intensity matching the accuracy color (green/blue/orange/red).
+**Why:** Plain colored circles on a dark map are hard to find at small sizes. The drop-shadow creates a halo that draws the eye to marker locations without requiring larger circles.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |
