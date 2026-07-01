@@ -88,6 +88,58 @@ const Tip = ({ active, payload, label }) => {
   )
 }
 
+function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
+  const data = useMemo(() => {
+    const counts = {}
+    rows.forEach(q => { counts[q.region] = (counts[q.region] || 0) + 1 })
+    return Object.entries(counts)
+      .map(([region, count]) => ({ region, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [rows])
+  return (
+    <div style={CHART_BOX}>
+      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a region to see its queues</p>
+      <ResponsiveContainer width="100%" height={160}>
+        <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} barCategoryGap="30%">
+          <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
+          <XAxis dataKey="region" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+          <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.06)' }} />
+          <Bar dataKey="count" name="Queues" radius={[4,4,0,0]} maxBarSize={54}
+            onClick={d => onSelectRegion(d.region)} style={{ cursor: 'pointer' }}>
+            {data.map((d, i) => (
+              <Cell key={i} fill="#38bdf8" opacity={selectedRegion == null || selectedRegion === d.region ? 0.85 : 0.3} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+function QueuesSection({ rows }) {
+  const [selectedRegion, setSelectedRegion] = useState(null)
+  const filteredRows = selectedRegion ? rows.filter(q => q.region === selectedRegion) : rows
+  return (
+    <>
+      <QueuesByRegionChart rows={rows} selectedRegion={selectedRegion}
+        onSelectRegion={r => setSelectedRegion(prev => prev === r ? null : r)} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 6px' }}>
+        <p style={{ fontSize: 10, color: '#5a8bb0' }}>
+          {selectedRegion ? <><span style={{ color: '#38bdf8', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
+        </p>
+        {selectedRegion && (
+          <button onClick={() => setSelectedRegion(null)} style={{
+            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
+          }}>Clear</button>
+        )}
+      </div>
+      <QueueTable rows={filteredRows} />
+    </>
+  )
+}
+
 function QueueTable({ rows }) {
   return (
     <div style={{ overflowX: 'auto', maxHeight: 220, overflowY: 'auto' }}>
@@ -275,7 +327,7 @@ function DrillDownPanel({ type, filters, rows, onClose }) {
         <button onClick={onClose} style={{ position: 'absolute', right: 0, top: -1, color: '#3d607a', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
       </div>
 
-      {type === 'queues' && <QueueTable rows={rows} />}
+      {type === 'queues' && <QueuesSection rows={rows} />}
       {type === 'volume' && <VolumeByFYChart filters={filters} />}
       {type === 'dbOsp' && <DbOspByFYChart filters={filters} />}
       {type === 'forecast' && <ForecastByRegionChart filters={filters} />}
