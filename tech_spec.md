@@ -95,17 +95,21 @@ No external state library. All state is local React `useState`:
 
 ### Constants
 ```
-CQN_LIST         — 11 queue names (ISG-ESG-{REGION}-{N})
-PLAN_NAMES       — ['Actual', 'Dec Plan', 'Jan Plan', 'Apr Plan', 'May Plan']
-FISCAL_YEARS     — ['FY25', 'FY26', 'FY27']
-REGIONS          — ['AMER', 'EMEA', 'APJ', 'LATAM']
-COUNTRIES        — { AMER: [...], EMEA: [...], APJ: [...], LATAM: [...] }
+CQN_LIST             — 11 legacy placeholder codes (ISG-ESG-{REGION}-{N}); only feeds PLAN_VS_PLAN_BY_CQN's slice(0,8) fallback shape, superseded by VARIANCE_SAMPLE
+ACTIVE_QUEUE_NAMES   — 199 real active queue names (business-supplied)
+INACTIVE_QUEUE_NAMES — 406 real inactive queue names (business-supplied, no UI yet)
+CAPACITY_CODES       — ~610 real capacity codes (business-supplied)
+PLAN_NAMES           — ['AOP_FY26Q4_AA', 'FY27 Q1 APR Plan', 'FY27 Q2 JUN Plan', 'FY27Q1_AA']
+FISCAL_YEARS         — ['FY25', 'FY26', 'FY27']
+REGIONS              — ['AMER', 'EMEA', 'APJ', 'LATAM']
+COUNTRIES            — { AMER: [...], EMEA: [...], APJ: [...], LATAM: [...] }
+inferRegion(name)    — regex-based mapping from a real queue name to one of REGIONS or 'Global'
 ```
 
 ### Card Data
 ```
-CARD_DATA        — { totalQueues, callVolume, dbOspSplit, forecastAccuracy, cqnVariance }
-ACTIVE_QUEUES    — Array<{ name, region, offered, handled, accuracy }>
+CARD_DATA        — { totalQueues: {active: 199, inactive: 406}, callVolume, dbOspSplit, forecastAccuracy, cqnVariance: {withinRange: 147, total: 199, pct} }
+ACTIVE_QUEUES    — ACTIVE_QUEUE_NAMES.map(...) → Array<{ name, region (via inferRegion), offered, handled, accuracy }>
 ```
 
 ### Layer 1 Data (Plan over Plan)
@@ -114,7 +118,7 @@ PLAN_VS_PLAN_BY_FY      — period, plan1, plan2, variance (computed getter)
 PLAN_VS_PLAN_BY_QTR     — same shape, 4 quarters
 PLAN_VS_PLAN_BY_WEEK    — same shape, 13 weeks
 PLAN_VS_PLAN_BY_REGION  — region, plan1, plan2, variance
-PLAN_VS_PLAN_BY_CQN     — cqn (short name), plan1, plan2, variance
+PLAN_VS_PLAN_BY_CQN     — cqn (real name, from VARIANCE_SAMPLE), plan1, plan2, variance
 ```
 
 ### Layer 2 Data (Actual vs Plan)
@@ -123,7 +127,12 @@ ACTUAL_VS_PLAN_BY_FY    — period, actual, plan, adherence (computed getter)
 ACTUAL_VS_PLAN_BY_QTR   — same shape, 4 quarters
 ACTUAL_VS_PLAN_BY_WEEK  — same shape, 13 weeks
 STACKED_ADHERENCE       — fy, excellent, good, fair, poor (% buckets)
-ACTUAL_VS_PLAN_BY_CQN   — cqn, actual, plan, variance
+ACTUAL_VS_PLAN_BY_CQN   — cqn (real name, from VARIANCE_SAMPLE), actual, plan, variance
+```
+
+### Shared Sample
+```
+VARIANCE_SAMPLE  — 5 real queue names used by both PLAN_VS_PLAN_BY_CQN and ACTUAL_VS_PLAN_BY_CQN
 ```
 
 ### Layer 3 Data (Geo)
@@ -169,7 +178,8 @@ Steps:
 ## Known Limitations
 
 1. Filters are UI-only — no data filtering logic wired yet
-2. All data is mock/static — no API endpoints
-3. 682KB bundle (recharts + react-simple-maps) — consider dynamic imports
+2. Queue/capacity/plan names are real; underlying volume/accuracy/variance numbers are still mock/static — no API endpoints
+3. ~697KB bundle (recharts + react-simple-maps) — consider dynamic imports
 4. No authentication, no role-based views
 5. No mobile/responsive layout optimisation (designed for 1280px+ screens)
+6. No drill-down UI for `INACTIVE_QUEUE_NAMES` (406 real names) — only the count surfaces on the Total Queues card

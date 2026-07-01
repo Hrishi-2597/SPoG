@@ -75,7 +75,7 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ### CQN chart orientation — horizontal bars
 **Decision:** Visual 3 in both Layer 1 and Layer 2 uses a horizontal (layout="vertical") bar chart.
-**Why:** CQN names like `ISG-ESG-AMER-01` are long strings — they fit naturally on the Y axis. Vertical bars with CQN names on the X axis would require angled labels and wasted space.
+**Why:** Real queue names (e.g. `EMEA DPD AVAMAR`, `NAMER DPD DataDomain`) are long strings — they fit naturally on the Y axis. Vertical bars with queue names on the X axis would require angled labels and wasted space. YAxis width was widened to 130px (from the original CQN-code-era 58–60px) once real names replaced short placeholder codes.
 
 ---
 
