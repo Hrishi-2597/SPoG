@@ -6,6 +6,7 @@
 - Renamed: Layer 1 Visual 1 "Fiscal Year Plan Variance" → **PoP Variation**; Layer 2 Visual 1 "Fiscal Year Adherence" → **Actual vs Plan Variation**.
 - RCA & CLCA sidebar now starts at the "Analysis Layers" divider, not "Key Metrics" — the 5 KPI cards span the full page width on their own.
 - Forecast Variance Distribution's tooltip now shows queue **counts** per bucket (e.g. "< 10%: 76 queues") instead of repeating the % already printed on the bar — computed from the same DB/OSP-agnostic queue count the Total Queues card uses, so it stays consistent with the rest of the dashboard as filters change.
+- Call Volume drill-down (Offered vs Handled) gained a **Handled %** line on a second right-hand axis (0–100%, clean 25% ticks), matching the dual-axis + trend-line pattern already used everywhere else (Adherence %, Accuracy %, Variance %). Colored violet, consistent with the app's "neutral % trend line" convention.
 
 ## Current State (as of 2026-07-01)
 

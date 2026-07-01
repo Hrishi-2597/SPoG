@@ -8,7 +8,9 @@ import {
   CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY,
 } from '../data/mockData'
 
-const C = { offered: '#38bdf8', handled: '#34d399', db: '#38bdf8', osp: '#fb923c', actual: '#38bdf8', forecast: '#fb923c', line: '#34d399', grid: 'rgba(255,255,255,0.06)', tick: '#4a6a85' }
+// pct: violet for the "% trend line" role — matches the app-wide convention that
+// neutral analytical lines get violet, since green/handled already means something else here.
+const C = { offered: '#38bdf8', handled: '#34d399', db: '#38bdf8', osp: '#fb923c', actual: '#38bdf8', forecast: '#fb923c', line: '#34d399', pct: '#a78bfa', grid: 'rgba(255,255,255,0.06)', tick: '#4a6a85' }
 // Chart drill-downs are capped and centered so 3-5 categories don't stretch across the
 // full dashboard width with huge gaps between bar groups.
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
@@ -196,20 +198,26 @@ function QueueTable({ rows }) {
 }
 
 function VolumeByFYChart({ filters }) {
-  const data = useMemo(() => callVolumeByFY(filters), [filters])
+  const data = useMemo(() => callVolumeByFY(filters).map(d => ({
+    ...d, handledPct: d.offered ? +(d.handled / d.offered * 100).toFixed(1) : 0,
+  })), [filters])
   return (
     <div style={CHART_BOX}>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} {...BAR_GAPS}>
+        <ComposedChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }} {...BAR_GAPS}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false}
+          <YAxis yAxisId="l" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false}
             tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+          <YAxis yAxisId="r" orientation="right" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fill: C.pct, fontSize: 10 }} axisLine={false} tickLine={false}
+            tickFormatter={v => `${v}%`} />
           <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
           <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
-          <Bar dataKey="offered" name="Offered" fill={C.offered} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54} />
-          <Bar dataKey="handled" name="Handled" fill={C.handled} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54} />
-        </BarChart>
+          <Bar yAxisId="l" dataKey="offered" name="Offered" fill={C.offered} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54} />
+          <Bar yAxisId="l" dataKey="handled" name="Handled" fill={C.handled} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54} />
+          <Line yAxisId="r" type="monotone" dataKey="handledPct" name="Handled %" stroke={C.pct}
+            strokeWidth={2} dot={{ r: 3, fill: C.pct, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   )
