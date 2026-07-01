@@ -122,11 +122,11 @@ function Visual3() {
     <Visual title="CQN Highest Variance">
       <div style={{ height: 8 }} />
       <ResponsiveContainer width="100%" height={220}>
-        <ComposedChart data={sorted} layout="vertical" margin={{ top: 0, right: 32, left: 60, bottom: 0 }}>
+        <ComposedChart data={sorted} layout="vertical" margin={{ top: 0, right: 32, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} horizontal={false} />
           <XAxis type="number" tick={{ fill: C.tick, fontSize: 9 }} axisLine={false} tickLine={false}
             tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
-          <YAxis type="category" dataKey="cqn" tick={{ fill: C.tick, fontSize: 9 }} width={60} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="cqn" tick={{ fill: C.tick, fontSize: 9 }} width={130} axisLine={false} tickLine={false} />
           <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
           <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
           <Bar dataKey="actual" name="Actuals" radius={[0,3,3,0]} maxBarSize={13}>
@@ -141,7 +141,7 @@ function Visual3() {
 
 export default function Layer2ActualVsPlan() {
   const [open, setOpen] = useState(true)
-  const [plan, setPlan] = useState('Jan Plan')
+  const [plan, setPlan] = useState('FY27 Q1 APR Plan')
 
   return (
     <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>

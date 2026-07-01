@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  CQN_LIST, PLAN_NAMES, FISCAL_YEARS, FISCAL_QUARTERS,
+  ACTIVE_QUEUE_NAMES, CAPACITY_CODES, PLAN_NAMES, FISCAL_YEARS, FISCAL_QUARTERS,
   FISCAL_WEEKS, CHANNELS, REGIONS, BUSINESS_PARTNERS,
 } from '../data/mockData'
 
@@ -27,8 +27,8 @@ export default function FilterPanel({ filters, onChange }) {
   const set = key => val => onChange({ ...filters, [key]: val })
 
   const filterDefs = [
-    { key: 'cqn',            label: 'Queue Name',      options: ['All', ...CQN_LIST] },
-    { key: 'capacityCode',   label: 'Capacity Code',   options: ['All', 'Internal', 'External', 'Hybrid'] },
+    { key: 'cqn',            label: 'Queue Name',      options: ['All', ...ACTIVE_QUEUE_NAMES] },
+    { key: 'capacityCode',   label: 'Capacity Code',   options: ['All', ...CAPACITY_CODES] },
     { key: 'planName',       label: 'Plan Name',       options: ['All', ...PLAN_NAMES] },
     { key: 'fiscalYear',     label: 'Fiscal Year',     options: ['All', ...FISCAL_YEARS] },
     { key: 'fiscalQuarter',  label: 'Fiscal Quarter',  options: ['All', ...FISCAL_QUARTERS] },

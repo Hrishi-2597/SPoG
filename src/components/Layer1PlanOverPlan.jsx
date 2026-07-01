@@ -142,11 +142,11 @@ function Visual3({ planA, planB, onPlanChange }) {
       <div style={{ height: 8 }} />
       <ResponsiveContainer width="100%" height={210}>
         <ComposedChart data={PLAN_VS_PLAN_BY_CQN} layout="vertical"
-          margin={{ top: 0, right: 28, left: 58, bottom: 0 }}>
+          margin={{ top: 0, right: 28, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} horizontal={false} />
           <XAxis type="number" tick={{ fill: C.tick, fontSize: 9 }} axisLine={false} tickLine={false}
             tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
-          <YAxis type="category" dataKey="cqn" tick={{ fill: C.tick, fontSize: 9 }} width={58} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="cqn" tick={{ fill: C.tick, fontSize: 9 }} width={130} axisLine={false} tickLine={false} />
           <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
           <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
           <Bar dataKey="plan1" name={planA} fill={C.plan1} opacity={0.8} radius={[0,3,3,0]} maxBarSize={14} />
@@ -158,7 +158,7 @@ function Visual3({ planA, planB, onPlanChange }) {
 }
 
 export default function Layer1PlanOverPlan() {
-  const [plans, setPlans] = useState({ planA: 'Dec Plan', planB: 'Jan Plan' })
+  const [plans, setPlans] = useState({ planA: 'AOP_FY26Q4_AA', planB: 'FY27 Q1 APR Plan' })
   const [open, setOpen] = useState(true)
   const handlePlanChange = (key, val) => setPlans(p => ({ ...p, [key]: val }))
 
