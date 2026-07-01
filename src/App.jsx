@@ -5,18 +5,20 @@ import Layer1PlanOverPlan from './components/Layer1PlanOverPlan'
 import Layer2ActualVsPlan from './components/Layer2ActualVsPlan'
 import Layer3GeoMap from './components/Layer3GeoMap'
 
+// Every filter below is multi-select: [] means "no selection = All". DB/OSP alone stays
+// a single string since it's a 3-way segmented pill, not a searchable dropdown.
 const DEFAULT_FILTERS = {
-  cqn:            'All',
-  capacityCode:   'All',
-  planName:       'All',
-  fiscalYear:     'All',
-  fiscalQuarter:  'All',
-  fiscalWeek:     'All',
-  channel:        'All',
-  businessPartner:'All',
-  region:         'All',
-  subRegion:      'All',
-  l5Manager:      'All',
+  cqn:            [],
+  capacityCode:   [],
+  planName:       [],
+  fiscalYear:     [],
+  fiscalQuarter:  [],
+  fiscalWeek:     [],
+  channel:        [],
+  businessPartner:[],
+  region:         [],
+  subRegion:      [],
+  l5Manager:      [],
   dbOsp:          'DB',
 }
 

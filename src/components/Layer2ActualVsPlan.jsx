@@ -130,9 +130,8 @@ export default function Layer2ActualVsPlan({ filters }) {
   const [plan, setPlan] = useState('FY27 Q1 APR Plan')
 
   useEffect(() => {
-    if (filters.planName && filters.planName !== 'All' && PLANS.includes(filters.planName)) {
-      setPlan(filters.planName)
-    }
+    const picked = filters.planName?.[0]
+    if (picked && PLANS.includes(picked)) setPlan(picked)
   }, [filters.planName])
 
   return (

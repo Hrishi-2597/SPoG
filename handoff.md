@@ -88,6 +88,12 @@ Layer 1 Visual 1 and Layer 2 Visual 1 used to have their own `FY / Quarter / Wee
 
 The filter bar was restructured away from a flat 12-dropdown grid (which read like a generic BI slicer panel) into 4 icon-labeled clusters — Scope, Time, People, Geography — with a DB/OSP segmented pill instead of a third binary dropdown, and an "applied filters" chip strip that appears under the bar once anything is scoped (each chip removable, plus "Clear all"). Queue Name and Capacity Code render in a monospace face since they're system codes, not names. See `design_choice.md` for the full rationale.
 
+### Filters are searchable multi-selects
+
+All 11 dropdown filters (everything except DB/OSP, which stays the 3-way segmented pill) are now `MultiSelectField` — a button that opens a popover with a search box, "Select all"/"Clear", and a checkbox list; pick any number of values. This matters most for Queue Name (199 options) and Capacity Code (~610), which were unusable to scroll through as a plain `<select>`.
+
+**Every filter's value changed from a string to an array.** `[]` means "no selection = All" (this replaced the old `'All'` sentinel string everywhere except `dbOsp`). `filterQueues()` and every region/FY selector in `mockData.js` now check `array.includes(value)` instead of `value === selected`. If you're adding a new filter or a new selector function, follow that pattern — see `tech_spec.md` → "Data Model".
+
 ---
 
 ## KPI Card Drill-Downs Rebuilt (as of 2026-07-01)

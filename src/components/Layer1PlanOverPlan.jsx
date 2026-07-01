@@ -132,12 +132,14 @@ export default function Layer1PlanOverPlan({ filters }) {
   const handlePlanChange = (key, val) => setPlans(p => ({ ...p, [key]: val }))
 
   // The top Plan Name filter sets the primary plan (A) shown across all three
-  // visuals; each visual can still be overridden independently via its own dropdowns.
+  // visuals (using the first selection if multiple are chosen); each visual can
+  // still be overridden independently via its own dropdowns.
   useEffect(() => {
-    if (filters.planName && filters.planName !== 'All' && PLANS.includes(filters.planName)) {
+    const picked = filters.planName?.[0]
+    if (picked && PLANS.includes(picked)) {
       setPlans(p => ({
-        planA: filters.planName,
-        planB: p.planB !== filters.planName ? p.planB : PLANS.find(pl => pl !== filters.planName) || p.planB,
+        planA: picked,
+        planB: p.planB !== picked ? p.planB : PLANS.find(pl => pl !== picked) || p.planB,
       }))
     }
   }, [filters.planName])

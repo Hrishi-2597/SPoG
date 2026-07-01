@@ -116,6 +116,93 @@
   .select-dark:focus  { border-bottom-color: #38bdf8; background-color: rgba(56,189,248,0.07); box-shadow: 0 1px 0 0 #38bdf8; }
   .select-dark option { background: #0c1929; color: #e6f1ff; }
 
+  /* ── Multi-select field (searchable, checkbox list) ────────────────── */
+  .ms-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    background-color: rgba(255,255,255,0.025);
+    border: none;
+    border-bottom: 1.5px solid rgba(255,255,255,0.09);
+    border-radius: 4px 4px 0 0;
+    color: #e6f1ff;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    outline: none;
+    text-align: left;
+  }
+  .ms-field:hover  { border-bottom-color: rgba(56,189,248,0.5); background-color: rgba(56,189,248,0.05); }
+  .ms-field:focus  { border-bottom-color: #38bdf8; background-color: rgba(56,189,248,0.07); box-shadow: 0 1px 0 0 #38bdf8; }
+  .ms-field-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .ms-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 50;
+    width: max(100%, 220px);
+    background: #0c1929;
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55), 0 0 20px rgba(56,189,248,0.08);
+    padding: 8px;
+  }
+  .ms-search {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 5px;
+    color: #e6f1ff;
+    font-size: 11px;
+    padding: 5px 8px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .ms-search:focus { border-color: rgba(56,189,248,0.5); }
+  .ms-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 2px 4px;
+  }
+  .ms-actions button {
+    background: none;
+    border: none;
+    color: #5a8bb0;
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .ms-actions button:hover { color: #38bdf8; }
+  .ms-list {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .ms-option {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #cfe8fb;
+    cursor: pointer;
+  }
+  .ms-option:hover { background: rgba(56,189,248,0.08); }
+  .ms-option input { flex-shrink: 0; cursor: pointer; }
+  .ms-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ms-empty { font-size: 10.5px; color: #3d607a; padding: 8px 6px; text-align: center; }
+
   /* ── Applied-filter chip ────────────────────────────────────────── */
   .filter-chip {
     display: inline-flex;

@@ -184,7 +184,13 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ### Underline-tab select styling instead of bordered boxes
 **Decision:** `.select-dark` dropped its full border/box background for a nearly-transparent field with a bottom accent underline that only lights up on hover/focus (`border-bottom` from `rgba(255,255,255,0.09)` to `#38bdf8`), plus a softer custom chevron.
-**Why:** Boxed dropdowns in a row are the single most recognizable "BI slicer panel" signature. An underline-tab treatment reads as a quiet, integrated control — closer to how a native ops console treats inputs — while keeping the exact same interaction model (still a native `<select>`, no custom listbox to maintain).
+**Why:** Boxed dropdowns in a row are the single most recognizable "BI slicer panel" signature. An underline-tab treatment reads as a quiet, integrated control — closer to how a native ops console treats inputs.
+**Update (2026-07-01):** The 11 non-DB/OSP filters are no longer native `<select>` elements — see "Searchable multi-select filters" below — but `.ms-field` carries the exact same underline-tab visual treatment, so the look didn't change, only the interaction model underneath it.
+
+### Searchable multi-select filters (2026-07-01)
+**Decision:** Built a custom `MultiSelectField` (button + popover: search box, "Select all"/"Clear", checkbox list, native `accent-color` checkboxes) to replace every native `<select>` except the DB/OSP pill.
+**Why:** Queue Name (199 options) and Capacity Code (~610) were unusable as plain dropdowns — no way to search, no way to pick more than one. A checkbox-list-with-search is structurally what Power BI's slicer does too, but the mechanism being similar doesn't make it wrong; the execution is what was asked to differ (dark glass panel, accent glow border, underline-tab trigger matching the rest of the bar) rather than the interaction pattern itself, which is the correct tool for "search + multi-select" regardless of what tool popularized it.
+**Consequence:** Every filter value became an array (`[]` = no selection = "All") except `dbOsp`, which stayed a single string since the pill is a 3-way exclusive control, not a search-and-multi-select case. `mockData.js`'s `matchesMulti()` helper and `effectiveFiscalYears()` (renamed from the old singular `effectiveFiscalYear`) are the seams where every chart/card selector adapted to array-valued filters.
 
 ### Monospace font for Queue Name & Capacity Code values
 **Decision:** Those two fields render in a system monospace stack; every other filter stays in Space Grotesk.

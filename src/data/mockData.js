@@ -306,25 +306,37 @@ export const ACTIVE_QUEUES = ACTIVE_QUEUE_NAMES.map((name, i) => {
   }
 })
 
-const QUEUE_FILTER_KEYS = ['cqn', 'capacityCode', 'channel', 'businessPartner', 'region', 'subRegion', 'l5Manager', 'dbOsp']
-const QUEUE_FIELD_BY_KEY = { cqn: 'name', capacityCode: 'capacityCode', channel: 'channel', businessPartner: 'businessPartner', region: 'region', subRegion: 'subRegion', l5Manager: 'l5Manager', dbOsp: 'dbOsp' }
+// Every filter except DB/OSP is multi-select: its value is an array of chosen options,
+// or [] meaning "no selection = everything". DB/OSP stays a single string ('DB'|'OSP'|'All')
+// since it's a 3-way segmented pill, not a searchable dropdown.
+const QUEUE_FILTER_KEYS = ['cqn', 'capacityCode', 'channel', 'businessPartner', 'region', 'subRegion', 'l5Manager']
+const QUEUE_FIELD_BY_KEY = { cqn: 'name', capacityCode: 'capacityCode', channel: 'channel', businessPartner: 'businessPartner', region: 'region', subRegion: 'subRegion', l5Manager: 'l5Manager' }
 
 export function filterQueues(filters = {}) {
-  return ACTIVE_QUEUES.filter(q =>
-    QUEUE_FILTER_KEYS.every(key => {
+  return ACTIVE_QUEUES.filter(q => {
+    const multiOk = QUEUE_FILTER_KEYS.every(key => {
       const v = filters[key]
-      return !v || v === 'All' || q[QUEUE_FIELD_BY_KEY[key]] === v
+      return !v || v.length === 0 || v.includes(q[QUEUE_FIELD_BY_KEY[key]])
     })
-  )
+    const dbOsp = filters.dbOsp
+    return multiOk && (!dbOsp || dbOsp === 'All' || q.dbOsp === dbOsp)
+  })
 }
 
-// Fiscal Quarter/Week values carry their fiscal year as a prefix (e.g. 'FY26Q2', 'FY26W14'),
-// so the most specific time filter set determines which single FY the FY-level charts show.
-export function effectiveFiscalYear(filters = {}) {
-  if (filters.fiscalWeek && filters.fiscalWeek !== 'All') return filters.fiscalWeek.slice(0, 4)
-  if (filters.fiscalQuarter && filters.fiscalQuarter !== 'All') return filters.fiscalQuarter.slice(0, 4)
-  if (filters.fiscalYear && filters.fiscalYear !== 'All') return filters.fiscalYear
-  return 'All'
+// Fiscal Quarter/Week values carry their fiscal year as a prefix (e.g. 'FY26Q2', 'FY26W14').
+// The most specific time filter selected (Week > Quarter > Year) determines which fiscal
+// year(s) the FY-level charts show — spanning multiple years if the selection does.
+export function effectiveFiscalYears(filters = {}) {
+  const picked = (filters.fiscalWeek?.length && filters.fiscalWeek)
+    || (filters.fiscalQuarter?.length && filters.fiscalQuarter)
+    || (filters.fiscalYear?.length && filters.fiscalYear)
+  if (!picked) return FISCAL_YEARS
+  return FISCAL_YEARS.filter(fy => picked.some(v => v.slice(0, 4) === fy))
+}
+
+// A multi-select filter with no selection ([] or undefined) matches everything.
+function matchesMulti(selected, value) {
+  return !selected || selected.length === 0 || selected.includes(value)
 }
 
 // ── Cards ────────────────────────────────────────────────────────────────────
@@ -372,8 +384,7 @@ const BASE_CALL_VOLUME_BY_FY = {
 export function callVolumeByFY(filters = {}) {
   const rows = filterQueues(filters)
   const ratio = ACTIVE_QUEUES.length ? rows.length / ACTIVE_QUEUES.length : 0
-  const fy = effectiveFiscalYear(filters)
-  const years = fy === 'All' ? FISCAL_YEARS : [fy]
+  const years = effectiveFiscalYears(filters)
   return years.map(year => ({
     period: year,
     offered: Math.round(BASE_CALL_VOLUME_BY_FY[year].offered * ratio),
@@ -390,8 +401,7 @@ export function dbOspVolumeByFY(filters = {}) {
   const total = ACTIVE_QUEUES.length
   const ratio = total ? rows.length / total : 0
   const dbShare = rows.length ? rows.filter(q => q.dbOsp === 'DB').length / rows.length : 0
-  const fy = effectiveFiscalYear(filters)
-  const years = fy === 'All' ? FISCAL_YEARS : [fy]
+  const years = effectiveFiscalYears(filters)
   return years.map(year => {
     const totalOffered = Math.round(BASE_CALL_VOLUME_BY_FY[year].offered * ratio)
     return {
@@ -413,8 +423,7 @@ export const FORECAST_ACCURACY_BY_REGION = REGIONS.map(region => {
 })
 
 export function forecastAccuracyByRegion(filters = {}) {
-  const r = filters.region
-  return (!r || r === 'All') ? FORECAST_ACCURACY_BY_REGION : FORECAST_ACCURACY_BY_REGION.filter(d => d.region === r)
+  return FORECAST_ACCURACY_BY_REGION.filter(d => matchesMulti(filters.region, d.region))
 }
 
 // ── CQN Forecast Variance ─────────────────────────────────────────────────────
@@ -459,23 +468,22 @@ export const PLAN_VS_PLAN_BY_REGION = REGIONS.map((r, i) => ({
 }))
 
 export function planOverPlanByFY(filters = {}) {
-  const fy = effectiveFiscalYear(filters)
-  return fy === 'All' ? PLAN_VS_PLAN_BY_FY : PLAN_VS_PLAN_BY_FY.filter(d => d.period === fy)
+  const years = effectiveFiscalYears(filters)
+  return PLAN_VS_PLAN_BY_FY.filter(d => years.includes(d.period))
 }
 
 export function planOverPlanByRegion(filters = {}) {
-  const r = filters.region
-  return (!r || r === 'All') ? PLAN_VS_PLAN_BY_REGION : PLAN_VS_PLAN_BY_REGION.filter(d => d.region === r)
+  return PLAN_VS_PLAN_BY_REGION.filter(d => matchesMulti(filters.region, d.region))
 }
 
-// "CQN Highest Variance": with no queue selected, surfaces the 5 queues with the
+// "CQN Highest Variance": with no queues selected, surfaces the 5 queues with the
 // biggest |Plan A vs Plan B| swing out of whatever the other filters leave in scope;
-// with a specific queue selected, shows just that one queue. Like the KPI cards,
-// this is queue-portfolio scoping — DB/OSP is excluded so it can't silently empty
-// out a queue that simply doesn't route that kind of volume.
+// with specific queues selected, shows exactly those. Like the KPI cards, this is
+// queue-portfolio scoping — DB/OSP is excluded so it can't silently empty out a queue
+// that simply doesn't route that kind of volume.
 export function cqnPlanVariance(filters = {}, topN = 5) {
   const rows = filterQueues({ ...filters, dbOsp: 'All' }).map(q => ({ cqn: q.name, plan1: q.plan1, plan2: q.plan2, variance: q.planVariance }))
-  const hasQueue = filters.cqn && filters.cqn !== 'All'
+  const hasQueue = filters.cqn?.length > 0
   return hasQueue ? rows : [...rows].sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)).slice(0, topN)
 }
 
@@ -495,13 +503,13 @@ export const STACKED_ADHERENCE = [
 ]
 
 export function actualVsPlanByFY(filters = {}) {
-  const fy = effectiveFiscalYear(filters)
-  return fy === 'All' ? ACTUAL_VS_PLAN_BY_FY : ACTUAL_VS_PLAN_BY_FY.filter(d => d.period === fy)
+  const years = effectiveFiscalYears(filters)
+  return ACTUAL_VS_PLAN_BY_FY.filter(d => years.includes(d.period))
 }
 
 export function stackedAdherenceByFY(filters = {}) {
-  const fy = effectiveFiscalYear(filters)
-  return fy === 'All' ? STACKED_ADHERENCE : STACKED_ADHERENCE.filter(d => d.fy === fy)
+  const years = effectiveFiscalYears(filters)
+  return STACKED_ADHERENCE.filter(d => years.includes(d.fy))
 }
 
 // "CQN Highest Variance": biggest actual-vs-plan shortfall first, same queue scoping as above.
@@ -510,7 +518,7 @@ export function cqnActualVariance(filters = {}, topN = 5) {
     cqn: q.name, actual: q.handled, plan: q.offered,
     variance: +((q.handled - q.offered) / q.offered * 100).toFixed(1),
   }))
-  const hasQueue = filters.cqn && filters.cqn !== 'All'
+  const hasQueue = filters.cqn?.length > 0
   return hasQueue ? rows : [...rows].sort((a, b) => a.variance - b.variance).slice(0, topN)
 }
 
@@ -540,11 +548,9 @@ export const GEO_COUNTRY_DATA = [
 ]
 
 export function geoRegionData(filters = {}) {
-  const r = filters.region
-  return (!r || r === 'All') ? GEO_REGION_DATA : GEO_REGION_DATA.filter(d => d.region === r)
+  return GEO_REGION_DATA.filter(d => matchesMulti(filters.region, d.region))
 }
 
 export function geoCountryData(filters = {}) {
-  const r = filters.region
-  return (!r || r === 'All') ? GEO_COUNTRY_DATA : GEO_COUNTRY_DATA.filter(d => d.region === r)
+  return GEO_COUNTRY_DATA.filter(d => matchesMulti(filters.region, d.region))
 }

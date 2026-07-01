@@ -94,7 +94,7 @@ export default function Layer3GeoMap({ filters }) {
             {markers.length === 0 && (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
                 <p style={{ fontSize: 11, color: '#3d607a', textAlign: 'center', maxWidth: 220 }}>
-                  No {viewMode.toLowerCase()}-level geo data for “{filters.region}” — try Region "All" or a specific region.
+                  No {viewMode.toLowerCase()}-level geo data for “{filters.region?.join(', ')}” — try clearing Region or picking a specific one.
                 </p>
               </div>
             )}

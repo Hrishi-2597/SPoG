@@ -94,6 +94,8 @@ No external state library. All state is local React `useState`:
 
 All 12 filters funnel into a small set of selector functions that take `filters` and return the exact data a chart/card needs. Static exports (all-caps) are the underlying datasets; lowercase functions are the live selectors components actually call.
 
+**Filter value shape:** every filter except `dbOsp` is multi-select — its value is an array (`[]` = no selection = matches everything). `dbOsp` alone stays a plain string (`'DB'|'OSP'|'All'`) since it's a 3-way segmented pill (`FilterPanel.jsx`), not a searchable dropdown (`MultiSelectField.jsx`). `matchesMulti(selected, value)` in `mockData.js` is the shared "is this row in scope" check for array-valued filters.
+
 ### Constants
 ```
 ACTIVE_QUEUE_NAMES   — 199 real active queue names (business-supplied)
@@ -121,8 +123,10 @@ Every queue gets `subRegion`/`capacityCode`/`businessPartner`/`l5Manager`/`chann
 
 ```
 filterQueues(filters) — returns ACTIVE_QUEUES rows matching all of: cqn, capacityCode,
-  channel, businessPartner, region, subRegion, l5Manager, dbOsp (each 'All' passes through)
-effectiveFiscalYear(filters) — Week > Quarter > Year precedence → a single 'FYxx' or 'All'
+  channel, businessPartner, region, subRegion, l5Manager (each an array via matchesMulti),
+  plus dbOsp (single string, 'All' passes through)
+effectiveFiscalYears(filters) — Week > Quarter > Year precedence → an array of matching
+  FY strings (all 3 if nothing's selected; can span multiple years if the selection does)
 ```
 
 ### Cards

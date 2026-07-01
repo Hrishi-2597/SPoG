@@ -3,8 +3,7 @@ import {
   ACTIVE_QUEUE_NAMES, CAPACITY_CODES, PLAN_NAMES, FISCAL_YEARS, FISCAL_QUARTERS,
   FISCAL_WEEK_LIST, CHANNELS, REGIONS, SUB_REGIONS, BUSINESS_PARTNERS, L5_MANAGERS,
 } from '../data/mockData'
-
-const defaultFor = key => key === 'dbOsp' ? 'DB' : 'All'
+import MultiSelectField from './MultiSelectField'
 
 const ICONS = {
   scope: <path d="M2 3.5h10M2 7h10M2 10.5h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />,
@@ -18,24 +17,6 @@ function ClusterIcon({ name }) {
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#3d78a3', flexShrink: 0 }}>
       {ICONS[name]}
     </svg>
-  )
-}
-
-function Field({ label, value, options, onChange, mono }) {
-  return (
-    <div className="flex flex-col gap-1 min-w-0">
-      <label style={{ fontSize: 8.5, fontWeight: 600, color: '#4a6a85', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="select-dark"
-        style={mono ? { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 10.5 } : undefined}
-      >
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
   )
 }
 
@@ -54,27 +35,31 @@ function ClusterDivider() {
 
 export default function FilterPanel({ filters, onChange }) {
   const set = key => val => onChange({ ...filters, [key]: val })
-  const clear = key => onChange({ ...filters, [key]: defaultFor(key) })
-  const clearAll = () => onChange(Object.fromEntries(Object.keys(filters).map(k => [k, defaultFor(k)])))
 
   const defs = {
-    cqn:             { label: 'Queue Name',      options: ['All', ...ACTIVE_QUEUE_NAMES], mono: true },
-    capacityCode:    { label: 'Capacity Code',   options: ['All', ...CAPACITY_CODES], mono: true },
-    planName:        { label: 'Plan Name',       options: ['All', ...PLAN_NAMES] },
-    fiscalYear:      { label: 'Fiscal Year',     options: ['All', ...FISCAL_YEARS] },
-    fiscalQuarter:   { label: 'Fiscal Quarter',  options: ['All', ...FISCAL_QUARTERS] },
-    fiscalWeek:      { label: 'Fiscal Week',     options: ['All', ...FISCAL_WEEK_LIST] },
-    channel:         { label: 'Channel',         options: ['All', ...CHANNELS] },
-    businessPartner: { label: 'Business Partner',options: ['All', ...BUSINESS_PARTNERS] },
-    l5Manager:       { label: 'L5 Manager',      options: ['All', ...L5_MANAGERS] },
-    region:          { label: 'Region',          options: ['All', ...REGIONS] },
-    subRegion:       { label: 'Sub-region',      options: ['All', ...SUB_REGIONS] },
+    cqn:             { label: 'Queue Name',      options: ACTIVE_QUEUE_NAMES, mono: true },
+    capacityCode:    { label: 'Capacity Code',   options: CAPACITY_CODES, mono: true },
+    planName:        { label: 'Plan Name',       options: PLAN_NAMES },
+    fiscalYear:      { label: 'Fiscal Year',     options: FISCAL_YEARS },
+    fiscalQuarter:   { label: 'Fiscal Quarter',  options: FISCAL_QUARTERS },
+    fiscalWeek:      { label: 'Fiscal Week',     options: FISCAL_WEEK_LIST },
+    channel:         { label: 'Channel',         options: CHANNELS },
+    businessPartner: { label: 'Business Partner',options: BUSINESS_PARTNERS },
+    l5Manager:       { label: 'L5 Manager',      options: L5_MANAGERS },
+    region:          { label: 'Region',          options: REGIONS },
+    subRegion:       { label: 'Sub-region',      options: SUB_REGIONS },
   }
 
-  const field = key => <Field key={key} label={defs[key].label} value={filters[key]} options={defs[key].options} mono={defs[key].mono} onChange={set(key)} />
+  const field = key => (
+    <MultiSelectField key={key} label={defs[key].label} options={defs[key].options}
+      value={filters[key]} mono={defs[key].mono} onChange={set(key)} />
+  )
 
-  const activeFilters = Object.keys(filters)
-    .filter(k => k !== 'dbOsp' && defs[k] && filters[k] !== 'All')
+  const activeFilters = Object.keys(defs).filter(k => filters[k]?.length > 0)
+  const clearAll = () => onChange({
+    ...Object.fromEntries(Object.keys(defs).map(k => [k, []])),
+    dbOsp: 'DB',
+  })
 
   return (
     <div style={{
@@ -109,17 +94,24 @@ export default function FilterPanel({ filters, onChange }) {
         </div>
       </div>
 
-      {activeFilters.length > 0 && (
+      {(activeFilters.length > 0 || filters.dbOsp !== 'DB') && (
         <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <span style={{ fontSize: 8.5, fontWeight: 600, color: '#3d607a', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
             Scoped by
           </span>
           {activeFilters.map(k => (
             <span key={k} className="filter-chip">
-              <span style={{ color: '#5a8bb0' }}>{defs[k].label}:</span> {filters[k]}
-              <button onClick={() => clear(k)} aria-label={`Clear ${defs[k].label}`}>×</button>
+              <span style={{ color: '#5a8bb0' }}>{defs[k].label}:</span>{' '}
+              {filters[k].length === 1 ? filters[k][0] : `${filters[k].length} selected`}
+              <button onClick={() => set(k)([])} aria-label={`Clear ${defs[k].label}`}>×</button>
             </span>
           ))}
+          {filters.dbOsp !== 'DB' && (
+            <span className="filter-chip">
+              <span style={{ color: '#5a8bb0' }}>DB / OSP:</span> {filters.dbOsp}
+              <button onClick={() => set('dbOsp')('DB')} aria-label="Reset DB / OSP">×</button>
+            </span>
+          )}
           <button onClick={clearAll} style={{
             fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
             marginLeft: 4, textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
