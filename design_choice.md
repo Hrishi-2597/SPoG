@@ -41,9 +41,10 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 **Decision:** Each layer (1/2/3) has a clickable header that toggles content visibility.
 **Why:** Lets users focus on one layer at a time. All 3 open simultaneously would be ~1200px tall and require constant scrolling.
 
-### Filter panel — 2 rows × 6 columns
+### Filter panel — 2 rows × 6 columns (superseded 2026-07-01)
 **Decision:** 12 filters laid out in a `grid-cols-6` grid inside the filter bar.
 **Why:** Exactly matches the PPT screenshot layout (6 filters per row). Keeps the filter panel compact (two rows) so it doesn't eat into chart space.
+**Update:** Replaced by the clustered filter bar below — the flat 6-per-row grid read as a generic BI slicer panel, which is exactly what the redesign was asked to move away from.
 
 ### Left-side section labels ("Cards", "Graphs")
 **Decision:** Removed the vertical text labels from the PPT spec — not included in the UI.
@@ -61,9 +62,10 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 **Decision:** Clicking a KPI card opens a panel directly below the cards row, not a modal overlay.
 **Why:** Modals interrupt workflow. An inline panel lets the user see both the card value and the detail table simultaneously without losing context of other cards.
 
-### Drill toggle (FY / Quarter / Week) as segmented control
+### Drill toggle (FY / Quarter / Week) as segmented control (removed 2026-07-01)
 **Decision:** Three-button segmented control per visual instead of a dropdown.
 **Why:** Users switch frequently between fiscal granularities. One-click toggle is faster than open-select-close. The options are fixed (only 3), so a segmented control is appropriate.
+**Update:** Removed once the top filter bar gained real Fiscal Year/Quarter/Week filters — having both a top-level time filter and a per-chart time toggle was a duplicate control surface. Layer 1/2 Visual 1 now always render at Fiscal Year granularity; the top filters (whichever is most specific) pick which year shows. The `.drill-toggle`/`.drill-btn` CSS classes weren't deleted — they're reused for the new DB/OSP segmented pill in the filter bar.
 
 ### Plan A / Plan B as separate dropdowns per visual
 **Decision:** Each visual in Layer 1 has its own Plan A / Plan B selector.
@@ -173,6 +175,38 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## Filter Bar Redesign & Live Filtering (2026-07-01)
+
+### Clustered filter bar, not a flat dropdown grid
+**Decision:** Regrouped the 12 filters into 4 icon-labeled clusters — Scope (Queue Name, Capacity Code, Plan Name), Time (Fiscal Year/Quarter/Week), People (Channel, Business Partner, L5 Manager), Geography (Region, Sub-region, DB/OSP) — with a thin accent-gradient divider between the two clusters on each row, and a small inline icon (stack / clock / person / globe) per cluster instead of one generic filter icon for the whole bar.
+**Why:** The brief explicitly asked for something that doesn't read as generic BI slicers. A wall of 12 identical dropdown boxes is exactly that; grouping by what the filter actually answers (what/when/who/where) gives the bar real structure instead of decoration, and the icons let the eye chunk the bar without reading every label.
+
+### Underline-tab select styling instead of bordered boxes
+**Decision:** `.select-dark` dropped its full border/box background for a nearly-transparent field with a bottom accent underline that only lights up on hover/focus (`border-bottom` from `rgba(255,255,255,0.09)` to `#38bdf8`), plus a softer custom chevron.
+**Why:** Boxed dropdowns in a row are the single most recognizable "BI slicer panel" signature. An underline-tab treatment reads as a quiet, integrated control — closer to how a native ops console treats inputs — while keeping the exact same interaction model (still a native `<select>`, no custom listbox to maintain).
+
+### Monospace font for Queue Name & Capacity Code values
+**Decision:** Those two fields render in a system monospace stack; every other filter stays in Space Grotesk.
+**Why:** They're literal system codes (`AM02`, `EMEA DPD AVAMAR`), not prose — the drill-down table already used monospace for queue names (see Layer 3 CQN tables). Extending that convention to the filter itself makes "this is a code" legible at a glance, and costs no extra font request since it's a system stack, not a webfont.
+
+### DB/OSP as a segmented pill, not a third binary dropdown
+**Decision:** Reused the existing `.drill-toggle`/`.drill-btn` pill pattern (freed up once the per-chart FY/Quarter/Week toggle was removed) for DB/OSP/All.
+**Why:** It's a 3-option exclusive choice — a dropdown for that is more clicks than it needs to be, and the pill pattern was already proven elsewhere in the app. Reusing it is more coherent than inventing a second toggle style.
+
+### Applied-filter chip strip (the signature element)
+**Decision:** Once any filter is off "All", a "Scoped by" strip appears below the filter bar — one glowing chip per active filter (`Label: Value ×`), plus "Clear all". Uses the same accent-glow language as the KPI cards' top-edge signature (glow intensifies on hover).
+**Why:** This is the one thing a Power BI-style slicer panel doesn't have: a persistent, at-a-glance answer to "what is this view currently scoped to?" Real ops dashboards (Datadog, Grafana) surface active scope as removable tags for exactly this reason — it turns 12 independent dropdowns into one coherent "current view" statement, and it doubles as the fastest way to back out of a filter without hunting for which dropdown you changed.
+
+### Live filtering via a queue fact table, not per-chart special cases
+**Decision:** `ACTIVE_QUEUES` became a fact table — every queue carries region, sub-region, capacity code, business partner, L5 manager, channel, and DB/OSP tags. `filterQueues(filters)` is the single function every card and CQN-variance chart calls; `cardData(filters)`, `cqnPlanVariance(filters)`, `cqnActualVariance(filters)` all sit on top of it.
+**Why:** The brief asked for every filter to visibly affect the graphs. Faking that per-chart with unrelated random scaling would look plausible but be dishonest math. A shared fact table means every filter's effect is a real re-aggregation (a real count, a real average, a real top-N) — slower to build than a fudge factor, but the numbers on screen are always literally true given the mock tags.
+
+### DB/OSP scopes volume, not queue-portfolio membership
+**Decision:** Total Queues / Forecast Accuracy / CQN Variance / both CQN-variance charts filter on 7 of the 8 queue dimensions but explicitly ignore DB/OSP; Call Volume / DB-OSP Split respect it.
+**Why:** The app's default filter state has always been `dbOsp: 'DB'` (pre-existing, not new). Once filtering became real, that default was silently shrinking "Total Queues" from 199 to ~132 on first load — a queue's existence and accuracy don't depend on which slice of its call volume you're viewing, so that default shouldn't touch portfolio-level metrics. Caught by screenshotting the live app during verification, not by inspection.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |
@@ -182,5 +216,5 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 | Unit tests | Not requested at this stage |
 | Backend API | Out of scope — placeholder for real data integration |
 | Mobile responsive layout | Dashboard is designed for ops-center / desktop screens (1280px+) |
-| Code splitting | Bundle size (682KB) is acceptable for internal tool; can be optimised later |
+| Code splitting | Bundle size (~711KB) is acceptable for internal tool; can be optimised later |
 | Custom font | Avoided extra network request; Segoe UI is already on Windows machines |

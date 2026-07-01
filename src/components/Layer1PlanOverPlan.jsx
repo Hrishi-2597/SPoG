@@ -1,12 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
-import {
-  PLAN_NAMES, PLAN_VS_PLAN_BY_FY, PLAN_VS_PLAN_BY_QTR,
-  PLAN_VS_PLAN_BY_WEEK, PLAN_VS_PLAN_BY_REGION, PLAN_VS_PLAN_BY_CQN,
-} from '../data/mockData'
+import { PLAN_NAMES, planOverPlanByFY, planOverPlanByRegion, cqnPlanVariance } from '../data/mockData'
 
 const PLANS = PLAN_NAMES.filter(p => p !== 'Actual')
 const C = { plan1: '#38bdf8', plan2: '#fb923c', variance: '#f87171', grid: 'rgba(255,255,255,0.05)', tick: '#4a6a85' }
@@ -23,16 +20,6 @@ function PlanDropdowns({ planA, planB, onChange }) {
             {PLANS.map(p => <option key={p}>{p}</option>)}
           </select>
         </div>
-      ))}
-    </div>
-  )
-}
-
-function DrillToggle({ value, onChange }) {
-  return (
-    <div className="drill-toggle">
-      {['FY', 'Quarter', 'Week'].map(o => (
-        <button key={o} onClick={() => onChange(o)} className={`drill-btn${value === o ? ' active' : ''}`}>{o}</button>
       ))}
     </div>
   )
@@ -64,14 +51,12 @@ function Visual({ title, children, controls }) {
   )
 }
 
-function Visual1({ planA, planB, onPlanChange }) {
-  const [drill, setDrill] = useState('FY')
-  const data = drill === 'FY' ? PLAN_VS_PLAN_BY_FY : drill === 'Quarter' ? PLAN_VS_PLAN_BY_QTR : PLAN_VS_PLAN_BY_WEEK
+function Visual1({ filters, planA, planB, onPlanChange }) {
+  const data = useMemo(() => planOverPlanByFY(filters), [filters])
   return (
-    <Visual title="Plan Comparison — Variance %"
+    <Visual title="Plan Comparison — Variance % (Fiscal Year)"
       controls={<PlanDropdowns planA={planA} planB={planB} onChange={onPlanChange} />}>
-      <DrillToggle value={drill} onChange={setDrill} />
-      <ResponsiveContainer width="100%" height={210}>
+      <ResponsiveContainer width="100%" height={222}>
         <ComposedChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -92,30 +77,13 @@ function Visual1({ planA, planB, onPlanChange }) {
   )
 }
 
-function Visual2({ planA, planB, onPlanChange }) {
-  const [viewMode, setViewMode] = useState('Region')
-  const [drill, setDrill] = useState('FY')
+function Visual2({ filters, planA, planB, onPlanChange }) {
+  const data = useMemo(() => planOverPlanByRegion(filters), [filters])
   return (
     <Visual title="Region-wise Plan Comparison — Variance %"
-      controls={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-          <PlanDropdowns planA={planA} planB={planB} onChange={onPlanChange} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#7fa8cc' }}>
-            <span style={{ color: viewMode === 'Region' ? '#38bdf8' : '#3d607a' }}>Region</span>
-            <button onClick={() => setViewMode(v => v === 'Region' ? 'Country' : 'Region')}
-              style={{ position: 'relative', display: 'inline-flex', width: 32, height: 17, borderRadius: 9,
-                background: viewMode === 'Country' ? '#38bdf8' : '#1a3050', border: 'none', cursor: 'pointer',
-                transition: 'background 0.2s', padding: 0 }}>
-              <span style={{ position: 'absolute', top: 2, left: viewMode === 'Country' ? 17 : 2,
-                width: 13, height: 13, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
-            </button>
-            <span style={{ color: viewMode === 'Country' ? '#38bdf8' : '#3d607a' }}>Country</span>
-          </div>
-        </div>
-      }>
-      <DrillToggle value={drill} onChange={setDrill} />
-      <ResponsiveContainer width="100%" height={210}>
-        <ComposedChart data={PLAN_VS_PLAN_BY_REGION} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
+      controls={<PlanDropdowns planA={planA} planB={planB} onChange={onPlanChange} />}>
+      <ResponsiveContainer width="100%" height={222}>
+        <ComposedChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="region" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
           <YAxis yAxisId="l" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false}
@@ -135,13 +103,14 @@ function Visual2({ planA, planB, onPlanChange }) {
   )
 }
 
-function Visual3({ planA, planB, onPlanChange }) {
+function Visual3({ filters, planA, planB, onPlanChange }) {
+  const data = useMemo(() => cqnPlanVariance(filters), [filters])
   return (
     <Visual title="CQN Highest Variance"
       controls={<PlanDropdowns planA={planA} planB={planB} onChange={onPlanChange} />}>
       <div style={{ height: 8 }} />
       <ResponsiveContainer width="100%" height={210}>
-        <ComposedChart data={PLAN_VS_PLAN_BY_CQN} layout="vertical"
+        <ComposedChart data={data} layout="vertical"
           margin={{ top: 0, right: 28, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} horizontal={false} />
           <XAxis type="number" tick={{ fill: C.tick, fontSize: 9 }} axisLine={false} tickLine={false}
@@ -157,10 +126,21 @@ function Visual3({ planA, planB, onPlanChange }) {
   )
 }
 
-export default function Layer1PlanOverPlan() {
+export default function Layer1PlanOverPlan({ filters }) {
   const [plans, setPlans] = useState({ planA: 'AOP_FY26Q4_AA', planB: 'FY27 Q1 APR Plan' })
   const [open, setOpen] = useState(true)
   const handlePlanChange = (key, val) => setPlans(p => ({ ...p, [key]: val }))
+
+  // The top Plan Name filter sets the primary plan (A) shown across all three
+  // visuals; each visual can still be overridden independently via its own dropdowns.
+  useEffect(() => {
+    if (filters.planName && filters.planName !== 'All' && PLANS.includes(filters.planName)) {
+      setPlans(p => ({
+        planA: filters.planName,
+        planB: p.planB !== filters.planName ? p.planB : PLANS.find(pl => pl !== filters.planName) || p.planB,
+      }))
+    }
+  }, [filters.planName])
 
   return (
     <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
@@ -179,9 +159,9 @@ export default function Layer1PlanOverPlan() {
       </div>
       {open && (
         <div style={{ padding: 12, display: 'flex', gap: 10 }}>
-          <Visual1 planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
-          <Visual2 planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
-          <Visual3 planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
+          <Visual1 filters={filters} planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
+          <Visual2 filters={filters} planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
+          <Visual3 filters={filters} planA={plans.planA} planB={plans.planB} onPlanChange={handlePlanChange} />
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
-import { GEO_REGION_DATA, GEO_COUNTRY_DATA } from '../data/mockData'
+import { geoRegionData, geoCountryData } from '../data/mockData'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -24,11 +24,14 @@ const LEGEND = [
   { label: '< 70% Critical',  color: '#dc2626' },
 ]
 
-export default function Layer3GeoMap() {
+export default function Layer3GeoMap({ filters }) {
   const [open, setOpen]         = useState(true)
   const [viewMode, setViewMode] = useState('Region')
   const [hovered, setHovered]   = useState(null)
-  const markers = viewMode === 'Region' ? GEO_REGION_DATA : GEO_COUNTRY_DATA
+  const markers = useMemo(
+    () => viewMode === 'Region' ? geoRegionData(filters) : geoCountryData(filters),
+    [viewMode, filters]
+  )
 
   return (
     <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
@@ -86,6 +89,15 @@ export default function Layer3GeoMap() {
           <div style={{ position: 'relative', background: '#070f1a', borderRadius: 8, overflow: 'hidden',
             height: 380, border: '1px solid rgba(255,255,255,0.06)',
             boxShadow: 'inset 0 0 40px rgba(0,0,0,0.4)' }}>
+
+            {/* Empty state: selected region has no plottable markers (e.g. "Global") */}
+            {markers.length === 0 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
+                <p style={{ fontSize: 11, color: '#3d607a', textAlign: 'center', maxWidth: 220 }}>
+                  No {viewMode.toLowerCase()}-level geo data for “{filters.region}” — try Region "All" or a specific region.
+                </p>
+              </div>
+            )}
 
             {/* Hovered tooltip */}
             {hovered && (

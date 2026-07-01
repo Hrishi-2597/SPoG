@@ -4,16 +4,34 @@ import {
   FISCAL_WEEK_LIST, CHANNELS, REGIONS, SUB_REGIONS, BUSINESS_PARTNERS, L5_MANAGERS,
 } from '../data/mockData'
 
-function Select({ label, value, options, onChange }) {
+const defaultFor = key => key === 'dbOsp' ? 'DB' : 'All'
+
+const ICONS = {
+  scope: <path d="M2 3.5h10M2 7h10M2 10.5h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />,
+  time: <><circle cx="7" cy="7" r="5.3" stroke="currentColor" strokeWidth="1.3" /><path d="M7 4.2V7l2.1 1.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></>,
+  people: <><circle cx="7" cy="4.8" r="2.3" stroke="currentColor" strokeWidth="1.3" /><path d="M2.3 11.5c0-2.4 2.1-4 4.7-4s4.7 1.6 4.7 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></>,
+  geo: <><circle cx="7" cy="7" r="5.3" stroke="currentColor" strokeWidth="1.3" /><path d="M1.7 7h10.6M7 1.7c1.6 1.4 2.5 3.4 2.5 5.3s-.9 3.9-2.5 5.3c-1.6-1.4-2.5-3.4-2.5-5.3S5.4 3.1 7 1.7Z" stroke="currentColor" strokeWidth="1.1" /></>,
+}
+
+function ClusterIcon({ name }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#3d78a3', flexShrink: 0 }}>
+      {ICONS[name]}
+    </svg>
+  )
+}
+
+function Field({ label, value, options, onChange, mono }) {
   return (
     <div className="flex flex-col gap-1 min-w-0">
-      <label style={{ fontSize: 9, fontWeight: 600, color: '#3d607a', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: 2 }}>
+      <label style={{ fontSize: 8.5, fontWeight: 600, color: '#4a6a85', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
         {label}
       </label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
         className="select-dark"
+        style={mono ? { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 10.5 } : undefined}
       >
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -21,59 +39,95 @@ function Select({ label, value, options, onChange }) {
   )
 }
 
+function Cluster({ icon, children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flex: '1 1 0' }}>
+      <div style={{ paddingBottom: 6 }}><ClusterIcon name={icon} /></div>
+      <div className="grid grid-cols-3 gap-x-3 flex-1 min-w-0">{children}</div>
+    </div>
+  )
+}
+
+function ClusterDivider() {
+  return <div style={{ width: 1, alignSelf: 'stretch', background: 'linear-gradient(180deg, transparent, rgba(56,189,248,0.18) 30%, rgba(56,189,248,0.18) 70%, transparent)', margin: '0 14px' }} />
+}
+
 export default function FilterPanel({ filters, onChange }) {
   const set = key => val => onChange({ ...filters, [key]: val })
+  const clear = key => onChange({ ...filters, [key]: defaultFor(key) })
+  const clearAll = () => onChange(Object.fromEntries(Object.keys(filters).map(k => [k, defaultFor(k)])))
 
-  const filterDefs = [
-    { key: 'cqn',            label: 'Queue Name',      options: ['All', ...ACTIVE_QUEUE_NAMES] },
-    { key: 'capacityCode',   label: 'Capacity Code',   options: ['All', ...CAPACITY_CODES] },
-    { key: 'planName',       label: 'Plan Name',       options: ['All', ...PLAN_NAMES] },
-    { key: 'fiscalYear',     label: 'Fiscal Year',     options: ['All', ...FISCAL_YEARS] },
-    { key: 'fiscalQuarter',  label: 'Fiscal Quarter',  options: ['All', ...FISCAL_QUARTERS] },
-    { key: 'fiscalWeek',     label: 'Fiscal Week',     options: ['All', ...FISCAL_WEEK_LIST] },
-    { key: 'channel',        label: 'Channel',         options: ['All', ...CHANNELS] },
-    { key: 'businessPartner',label: 'Business Partner',options: ['All', ...BUSINESS_PARTNERS] },
-    { key: 'region',         label: 'Region',          options: ['All', ...REGIONS] },
-    { key: 'subRegion',      label: 'Sub-region',      options: ['All', ...SUB_REGIONS] },
-    { key: 'l5Manager',      label: 'L5 Manager',      options: ['All', ...L5_MANAGERS] },
-    { key: 'dbOsp',         label: 'DB / OSP',         options: ['All', 'DB', 'OSP'] },
-  ]
+  const defs = {
+    cqn:             { label: 'Queue Name',      options: ['All', ...ACTIVE_QUEUE_NAMES], mono: true },
+    capacityCode:    { label: 'Capacity Code',   options: ['All', ...CAPACITY_CODES], mono: true },
+    planName:        { label: 'Plan Name',       options: ['All', ...PLAN_NAMES] },
+    fiscalYear:      { label: 'Fiscal Year',     options: ['All', ...FISCAL_YEARS] },
+    fiscalQuarter:   { label: 'Fiscal Quarter',  options: ['All', ...FISCAL_QUARTERS] },
+    fiscalWeek:      { label: 'Fiscal Week',     options: ['All', ...FISCAL_WEEK_LIST] },
+    channel:         { label: 'Channel',         options: ['All', ...CHANNELS] },
+    businessPartner: { label: 'Business Partner',options: ['All', ...BUSINESS_PARTNERS] },
+    l5Manager:       { label: 'L5 Manager',      options: ['All', ...L5_MANAGERS] },
+    region:          { label: 'Region',          options: ['All', ...REGIONS] },
+    subRegion:       { label: 'Sub-region',      options: ['All', ...SUB_REGIONS] },
+  }
 
-  const activeCount = Object.entries(filters).filter(([k, v]) =>
-    v !== 'All' && !(k === 'dbOsp' && v === 'DB')
-  ).length
+  const field = key => <Field key={key} label={defs[key].label} value={filters[key]} options={defs[key].options} mono={defs[key].mono} onChange={set(key)} />
+
+  const activeFilters = Object.keys(filters)
+    .filter(k => k !== 'dbOsp' && defs[k] && filters[k] !== 'All')
 
   return (
     <div style={{
       background: 'linear-gradient(180deg, #0c1929 0%, #0a1522 100%)',
       borderBottom: '1px solid rgba(255,255,255,0.06)',
-      padding: '10px 16px 12px',
+      padding: '11px 18px 12px',
     }}>
-      <div className="flex items-start gap-3">
-        {/* Label */}
-        <div style={{ paddingTop: 14, flexShrink: 0 }}>
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.6 }}>
-              <path d="M2 4h12M4 8h8M6 12h4" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            {activeCount > 0 && (
-              <span style={{
-                background: '#38bdf8', color: '#070f1a', borderRadius: 8,
-                fontSize: 9, fontWeight: 700, padding: '1px 5px',
-              }}>{activeCount}</span>
-            )}
+      <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 10 }}>
+        <Cluster icon="scope">{field('cqn')}{field('capacityCode')}{field('planName')}</Cluster>
+        <ClusterDivider />
+        <Cluster icon="time">{field('fiscalYear')}{field('fiscalQuarter')}{field('fiscalWeek')}</Cluster>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <Cluster icon="people">{field('channel')}{field('businessPartner')}{field('l5Manager')}</Cluster>
+        <ClusterDivider />
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flex: '1 1 0' }}>
+          <div style={{ paddingBottom: 6 }}><ClusterIcon name="geo" /></div>
+          <div className="grid grid-cols-3 gap-x-3 flex-1 min-w-0">
+            {field('region')}
+            {field('subRegion')}
+            <div className="flex flex-col gap-1 min-w-0">
+              <label style={{ fontSize: 8.5, fontWeight: 600, color: '#4a6a85', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
+                DB / OSP
+              </label>
+              <div className="drill-toggle" style={{ width: 'fit-content' }}>
+                {['DB', 'OSP', 'All'].map(o => (
+                  <button key={o} onClick={() => set('dbOsp')(o)} className={`drill-btn${filters.dbOsp === o ? ' active' : ''}`}>{o}</button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Grid */}
-        <div className="flex-1 grid grid-cols-6 gap-x-3 gap-y-2">
-          {filterDefs.map(f => (
-            <Select key={f.key} label={f.label} value={filters[f.key]} options={f.options} onChange={set(f.key)} />
-          ))}
-        </div>
       </div>
+
+      {activeFilters.length > 0 && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <span style={{ fontSize: 8.5, fontWeight: 600, color: '#3d607a', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
+            Scoped by
+          </span>
+          {activeFilters.map(k => (
+            <span key={k} className="filter-chip">
+              <span style={{ color: '#5a8bb0' }}>{defs[k].label}:</span> {filters[k]}
+              <button onClick={() => clear(k)} aria-label={`Clear ${defs[k].label}`}>×</button>
+            </span>
+          ))}
+          <button onClick={clearAll} style={{
+            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            marginLeft: 4, textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
+          }}>
+            Clear all
+          </button>
+        </div>
+      )}
     </div>
   )
 }

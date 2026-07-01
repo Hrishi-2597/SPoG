@@ -1,12 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   ComposedChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceLine, Cell,
 } from 'recharts'
-import {
-  PLAN_NAMES, ACTUAL_VS_PLAN_BY_FY, ACTUAL_VS_PLAN_BY_QTR,
-  ACTUAL_VS_PLAN_BY_WEEK, STACKED_ADHERENCE, ACTUAL_VS_PLAN_BY_CQN,
-} from '../data/mockData'
+import { PLAN_NAMES, actualVsPlanByFY, stackedAdherenceByFY, cqnActualVariance } from '../data/mockData'
 
 const PLANS = PLAN_NAMES.filter(p => p !== 'Actual')
 const C = { actual: '#38bdf8', plan: '#fb923c', line: '#34d399', grid: 'rgba(255,255,255,0.05)', tick: '#4a6a85' }
@@ -23,16 +20,6 @@ const Tip = ({ active, payload, label }) => {
             {typeof p.value === 'number' && p.value > 100 ? p.value.toLocaleString() : `${p.value}%`}
           </span>
         </p>
-      ))}
-    </div>
-  )
-}
-
-function DrillToggle({ value, onChange }) {
-  return (
-    <div className="drill-toggle">
-      {['FY', 'Quarter', 'Week'].map(o => (
-        <button key={o} onClick={() => onChange(o)} className={`drill-btn${value === o ? ' active' : ''}`}>{o}</button>
       ))}
     </div>
   )
@@ -61,13 +48,11 @@ function PlanSelect({ value, onChange }) {
   )
 }
 
-function Visual1({ selectedPlan, onPlanChange }) {
-  const [drill, setDrill] = useState('FY')
-  const data = drill === 'FY' ? ACTUAL_VS_PLAN_BY_FY : drill === 'Quarter' ? ACTUAL_VS_PLAN_BY_QTR : ACTUAL_VS_PLAN_BY_WEEK
+function Visual1({ filters, selectedPlan, onPlanChange }) {
+  const data = useMemo(() => actualVsPlanByFY(filters), [filters])
   return (
-    <Visual title="Actual vs Plan — Adherence %" controls={<PlanSelect value={selectedPlan} onChange={onPlanChange} />}>
-      <DrillToggle value={drill} onChange={setDrill} />
-      <ResponsiveContainer width="100%" height={210}>
+    <Visual title="Actual vs Plan — Adherence % (Fiscal Year)" controls={<PlanSelect value={selectedPlan} onChange={onPlanChange} />}>
+      <ResponsiveContainer width="100%" height={222}>
         <ComposedChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -88,7 +73,8 @@ function Visual1({ selectedPlan, onPlanChange }) {
   )
 }
 
-function Visual2({ selectedPlan, onPlanChange }) {
+function Visual2({ filters, selectedPlan, onPlanChange }) {
+  const data = useMemo(() => stackedAdherenceByFY(filters), [filters])
   return (
     <Visual title="Adherence Distribution by Fiscal Year" controls={<PlanSelect value={selectedPlan} onChange={onPlanChange} />}>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
@@ -99,8 +85,8 @@ function Visual2({ selectedPlan, onPlanChange }) {
           </span>
         ))}
       </div>
-      <ResponsiveContainer width="100%" height={195}>
-        <BarChart data={STACKED_ADHERENCE} margin={{ top: 4, right: 10, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={207}>
+        <BarChart data={data} margin={{ top: 4, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="fy" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false}
@@ -116,8 +102,8 @@ function Visual2({ selectedPlan, onPlanChange }) {
   )
 }
 
-function Visual3() {
-  const sorted = [...ACTUAL_VS_PLAN_BY_CQN].sort((a, b) => a.variance - b.variance)
+function Visual3({ filters }) {
+  const sorted = useMemo(() => cqnActualVariance(filters), [filters])
   return (
     <Visual title="CQN Highest Variance">
       <div style={{ height: 8 }} />
@@ -139,9 +125,15 @@ function Visual3() {
   )
 }
 
-export default function Layer2ActualVsPlan() {
+export default function Layer2ActualVsPlan({ filters }) {
   const [open, setOpen] = useState(true)
   const [plan, setPlan] = useState('FY27 Q1 APR Plan')
+
+  useEffect(() => {
+    if (filters.planName && filters.planName !== 'All' && PLANS.includes(filters.planName)) {
+      setPlan(filters.planName)
+    }
+  }, [filters.planName])
 
   return (
     <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
@@ -160,9 +152,9 @@ export default function Layer2ActualVsPlan() {
       </div>
       {open && (
         <div style={{ padding: 12, display: 'flex', gap: 10 }}>
-          <Visual1 selectedPlan={plan} onPlanChange={setPlan} />
-          <Visual2 selectedPlan={plan} onPlanChange={setPlan} />
-          <Visual3 />
+          <Visual1 filters={filters} selectedPlan={plan} onPlanChange={setPlan} />
+          <Visual2 filters={filters} selectedPlan={plan} onPlanChange={setPlan} />
+          <Visual3 filters={filters} />
         </div>
       )}
     </div>

@@ -1,18 +1,8 @@
-export const CQN_LIST = [
-  'ISG-ESG-AMER-01', 'ISG-ESG-AMER-02', 'ISG-ESG-AMER-03',
-  'ISG-ESG-EMEA-01', 'ISG-ESG-EMEA-02', 'ISG-ESG-EMEA-03',
-  'ISG-ESG-APJ-01',  'ISG-ESG-APJ-02',  'ISG-ESG-APJ-03',
-  'ISG-ESG-LATAM-01','ISG-ESG-LATAM-02',
-]
-
 export const PLAN_NAMES = ['AOP_FY26Q4_AA', 'FY27 Q1 APR Plan', 'FY27 Q2 JUN Plan', 'FY27Q1_AA']
 export const FISCAL_YEARS = ['FY25', 'FY26', 'FY27']
 
 // Fiscal Quarter filter options: FY25Q1 ... FY27Q4
 export const FISCAL_QUARTERS = FISCAL_YEARS.flatMap(fy => ['Q1', 'Q2', 'Q3', 'Q4'].map(q => `${fy}${q}`))
-
-// Chart drill data still buckets a year into 13 short weeks (W1..W13) — unrelated to the filter list below.
-export const FISCAL_WEEKS = Array.from({ length: 13 }, (_, i) => `W${i + 1}`)
 
 // Fiscal Week filter options: FY25W01 ... FY27W52
 export const FISCAL_WEEK_LIST = FISCAL_YEARS.flatMap(fy =>
@@ -21,12 +11,6 @@ export const FISCAL_WEEK_LIST = FISCAL_YEARS.flatMap(fy =>
 
 export const CHANNELS = ['Voice', 'Chat', 'Email', 'Social']
 export const REGIONS = ['APJ', 'EMEA', 'Global', 'LATAM', 'NAMER']
-export const COUNTRIES = {
-  AMER: ['USA', 'Canada', 'Mexico', 'Brazil'],
-  EMEA: ['UK', 'Germany', 'France', 'Netherlands', 'India'],
-  APJ:  ['Japan', 'Australia', 'Singapore', 'China'],
-  LATAM:['Argentina', 'Chile', 'Colombia'],
-}
 
 export const SUB_REGIONS = [
   'Australia', 'Brazil', 'CER', 'China', 'Costa Rica', 'EC', 'Egypt', 'EMEA', 'France',
@@ -290,26 +274,90 @@ function inferRegion(name) {
   if (/^APJ|^HCS APJ|^HCS LATAM|^Korea|^KOR|^ANZ|^MMCLA|^CCC|^Japan|^JP |^BRZ|^Brazil|CTE.*JPN|CTE.*KOR|CTE.*CCC/.test(name)) return 'APJ'
   if (/^LATAM|^ROLA|Portuguese$|Spanish$|Panama/.test(name)) return 'LATAM'
   if (/^EMEA|^ENG |^GER |^German|^FRA |^French|^ITA |^Italian|^SPA |^EC |^CER|^CZE|^ROE|^SWE|Nordics|^UKI|^UKI/.test(name)) return 'EMEA'
-  if (/^AMER|^NA |^NAMER|^US |Federal|Modular US|Enterprise.*US|Powerstore US/.test(name)) return 'AMER'
+  if (/^AMER|^NA |^NAMER|^US |Federal|Modular US|Enterprise.*US|Powerstore US/.test(name)) return 'NAMER'
   return 'Global'
 }
 
-// ── Cards ────────────────────────────────────────────────────────────────────
-export const CARD_DATA = {
-  totalQueues:     { active: 199, inactive: 406 },
-  callVolume:      { offered: 285400, handled: 268700, handlePct: 94.1 },
-  dbOspSplit:      { db: 68, osp: 32, dbVol: 193872, ospVol: 91128 },
-  forecastAccuracy:{ value: 87.4, target: 90 },
-  cqnVariance:     { withinRange: 147, total: 199, pct: 73.8 },
+// ── Queue fact table ─────────────────────────────────────────────────────────
+// Single source of truth for everything queue-level. Every categorical filter
+// (Capacity Code, Channel, Business Partner, Region, Sub-region, L5 Manager,
+// DB/OSP, Queue Name) narrows this list; cards and CQN-variance charts are
+// then recomputed from whatever rows remain.
+export const ACTIVE_QUEUES = ACTIVE_QUEUE_NAMES.map((name, i) => {
+  const offered = 20000 + i * 320
+  const handled = Math.round(offered * (0.90 + (i % 11) * 0.008))
+  const plan2   = Math.round(offered * (0.93 + (i % 9) * 0.012))
+  return {
+    name,
+    region: inferRegion(name),
+    subRegion: SUB_REGIONS[i % SUB_REGIONS.length],
+    capacityCode: CAPACITY_CODES[i % CAPACITY_CODES.length],
+    businessPartner: BUSINESS_PARTNERS[i % BUSINESS_PARTNERS.length],
+    l5Manager: L5_MANAGERS[i % L5_MANAGERS.length],
+    channel: CHANNELS[i % CHANNELS.length],
+    dbOsp: i % 3 === 0 ? 'OSP' : 'DB',
+    offered,
+    handled,
+    accuracy: 75 + (i * 7) % 25,
+    plan1: offered,
+    plan2,
+    get planVariance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
+    get adherence() { return +((this.handled / this.offered) * 100).toFixed(1) },
+  }
+})
+
+const QUEUE_FILTER_KEYS = ['cqn', 'capacityCode', 'channel', 'businessPartner', 'region', 'subRegion', 'l5Manager', 'dbOsp']
+const QUEUE_FIELD_BY_KEY = { cqn: 'name', capacityCode: 'capacityCode', channel: 'channel', businessPartner: 'businessPartner', region: 'region', subRegion: 'subRegion', l5Manager: 'l5Manager', dbOsp: 'dbOsp' }
+
+export function filterQueues(filters = {}) {
+  return ACTIVE_QUEUES.filter(q =>
+    QUEUE_FILTER_KEYS.every(key => {
+      const v = filters[key]
+      return !v || v === 'All' || q[QUEUE_FIELD_BY_KEY[key]] === v
+    })
+  )
 }
 
-export const ACTIVE_QUEUES = ACTIVE_QUEUE_NAMES.map((name, i) => ({
-  name,
-  region: inferRegion(name),
-  offered: 20000 + i * 320,
-  handled: 18800 + i * 300,
-  accuracy: 75 + (i * 7) % 25,
-}))
+// Fiscal Quarter/Week values carry their fiscal year as a prefix (e.g. 'FY26Q2', 'FY26W14'),
+// so the most specific time filter set determines which single FY the FY-level charts show.
+export function effectiveFiscalYear(filters = {}) {
+  if (filters.fiscalWeek && filters.fiscalWeek !== 'All') return filters.fiscalWeek.slice(0, 4)
+  if (filters.fiscalQuarter && filters.fiscalQuarter !== 'All') return filters.fiscalQuarter.slice(0, 4)
+  if (filters.fiscalYear && filters.fiscalYear !== 'All') return filters.fiscalYear
+  return 'All'
+}
+
+// ── Cards ────────────────────────────────────────────────────────────────────
+const BASE_CALL_VOLUME = { offered: 285400, handled: 268700 }
+
+export function cardData(filters = {}) {
+  // Queue portfolio health (count, accuracy, variance) reflects who's in scope —
+  // Queue Name, Region, Capacity Code, etc. — but not DB/OSP: a queue's accuracy
+  // doesn't change depending on which slice of its call volume you're looking at.
+  const structuralRows = filterQueues({ ...filters, dbOsp: 'All' })
+  const total = ACTIVE_QUEUES.length
+  const activeCount = structuralRows.length
+  const avgAccuracy = activeCount ? +(structuralRows.reduce((s, q) => s + q.accuracy, 0) / activeCount).toFixed(1) : 0
+  const withinRange = structuralRows.filter(q => q.accuracy >= 80).length
+
+  // Call volume, by contrast, is exactly what DB/OSP is meant to scope.
+  const volumeRows = filterQueues(filters)
+  const ratio = total ? volumeRows.length / total : 0
+  const dbCount = volumeRows.filter(q => q.dbOsp === 'DB').length
+  // With zero rows in scope there's no split to report — 0/0, not a misleading 0/100.
+  const dbPct = volumeRows.length ? Math.round((dbCount / volumeRows.length) * 100) : 0
+  const ospPct = volumeRows.length ? 100 - dbPct : 0
+  const offered = Math.round(BASE_CALL_VOLUME.offered * ratio)
+  const handled = Math.round(BASE_CALL_VOLUME.handled * ratio)
+
+  return {
+    totalQueues: { active: activeCount, inactive: INACTIVE_QUEUE_NAMES.length },
+    callVolume: { offered, handled, handlePct: offered ? +((handled / offered) * 100).toFixed(1) : 0 },
+    dbOspSplit: { db: dbPct, osp: ospPct, dbVol: Math.round(offered * dbPct / 100), ospVol: Math.round(offered * ospPct / 100) },
+    forecastAccuracy: { value: avgAccuracy, target: 90 },
+    cqnVariance: { withinRange, total: activeCount, pct: activeCount ? +((withinRange / activeCount) * 100).toFixed(1) : 0 },
+  }
+}
 
 // ── Plan over Plan (Layer 1) ─────────────────────────────────────────────────
 const BASE_PLAN = { FY25: 240000, FY26: 268000, FY27: 295000 }
@@ -321,20 +369,6 @@ export const PLAN_VS_PLAN_BY_FY = FISCAL_YEARS.map(fy => ({
   get variance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
 }))
 
-export const PLAN_VS_PLAN_BY_QTR = ['Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'].map((q, i) => ({
-  period: q,
-  plan1: 58000 + i * 4000,
-  plan2: 55000 + i * 4200,
-  get variance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
-}))
-
-export const PLAN_VS_PLAN_BY_WEEK = FISCAL_WEEKS.map((w, i) => ({
-  period: w,
-  plan1: 4200 + (i % 4) * 200,
-  plan2: 4000 + (i % 4) * 210,
-  get variance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
-}))
-
 // Order matches REGIONS: APJ, EMEA, Global, LATAM, NAMER
 export const PLAN_VS_PLAN_BY_REGION = REGIONS.map((r, i) => ({
   region: r,
@@ -343,20 +377,26 @@ export const PLAN_VS_PLAN_BY_REGION = REGIONS.map((r, i) => ({
   get variance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
 }))
 
-const VARIANCE_SAMPLE = [
-  'EMEA DPD AVAMAR',
-  'APJ HES XtremIO',
-  'NAMER DPD DataDomain',
-  'Global Powerstore',
-  'LATAM Manager',
-]
+export function planOverPlanByFY(filters = {}) {
+  const fy = effectiveFiscalYear(filters)
+  return fy === 'All' ? PLAN_VS_PLAN_BY_FY : PLAN_VS_PLAN_BY_FY.filter(d => d.period === fy)
+}
 
-export const PLAN_VS_PLAN_BY_CQN = VARIANCE_SAMPLE.map((cqn, i) => ({
-  cqn,
-  plan1: 22000 + i * 2800,
-  plan2: 20500 + i * 3000,
-  get variance() { return +((this.plan2 - this.plan1) / this.plan1 * 100).toFixed(1) },
-}))
+export function planOverPlanByRegion(filters = {}) {
+  const r = filters.region
+  return (!r || r === 'All') ? PLAN_VS_PLAN_BY_REGION : PLAN_VS_PLAN_BY_REGION.filter(d => d.region === r)
+}
+
+// "CQN Highest Variance": with no queue selected, surfaces the 5 queues with the
+// biggest |Plan A vs Plan B| swing out of whatever the other filters leave in scope;
+// with a specific queue selected, shows just that one queue. Like the KPI cards,
+// this is queue-portfolio scoping — DB/OSP is excluded so it can't silently empty
+// out a queue that simply doesn't route that kind of volume.
+export function cqnPlanVariance(filters = {}, topN = 5) {
+  const rows = filterQueues({ ...filters, dbOsp: 'All' }).map(q => ({ cqn: q.name, plan1: q.plan1, plan2: q.plan2, variance: q.planVariance }))
+  const hasQueue = filters.cqn && filters.cqn !== 'All'
+  return hasQueue ? rows : [...rows].sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)).slice(0, topN)
+}
 
 // ── Actual vs Plan (Layer 2) ─────────────────────────────────────────────────
 export const ACTUAL_VS_PLAN_BY_FY = FISCAL_YEARS.map(fy => ({
@@ -366,20 +406,6 @@ export const ACTUAL_VS_PLAN_BY_FY = FISCAL_YEARS.map(fy => ({
   get adherence() { return +((this.actual / this.plan) * 100).toFixed(1) },
 })).map(d => ({ ...d, actual: Math.round(d.actual) }))
 
-export const ACTUAL_VS_PLAN_BY_QTR = ['Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'].map((q, i) => ({
-  period: q,
-  actual: Math.round((56000 + i * 3800) * (0.87 + (i % 3) * 0.04)),
-  plan:   58000 + i * 4000,
-  get adherence() { return +((this.actual / this.plan) * 100).toFixed(1) },
-}))
-
-export const ACTUAL_VS_PLAN_BY_WEEK = FISCAL_WEEKS.map((w, i) => ({
-  period: w,
-  actual: Math.round((4200 + (i % 4) * 200) * (0.85 + (i % 5) * 0.03)),
-  plan:   4200 + (i % 4) * 200,
-  get adherence() { return +((this.actual / this.plan) * 100).toFixed(1) },
-}))
-
 // Stacked bar: adherence buckets per FY
 export const STACKED_ADHERENCE = [
   { fy: 'FY25', excellent: 43, good: 36, fair: 9,  poor: 13 },
@@ -387,28 +413,38 @@ export const STACKED_ADHERENCE = [
   { fy: 'FY27', excellent: 31, good: 29, fair: 25, poor: 15 },
 ]
 
-export const ACTUAL_VS_PLAN_BY_CQN = VARIANCE_SAMPLE.map((cqn, i) => {
-  const plan = 22000 + i * 2800
-  const actual = Math.round(plan * (0.78 + i * 0.03))
-  return {
-    cqn,
-    actual, plan,
-    variance: +((actual - plan) / plan * 100).toFixed(1),
-  }
-})
+export function actualVsPlanByFY(filters = {}) {
+  const fy = effectiveFiscalYear(filters)
+  return fy === 'All' ? ACTUAL_VS_PLAN_BY_FY : ACTUAL_VS_PLAN_BY_FY.filter(d => d.period === fy)
+}
+
+export function stackedAdherenceByFY(filters = {}) {
+  const fy = effectiveFiscalYear(filters)
+  return fy === 'All' ? STACKED_ADHERENCE : STACKED_ADHERENCE.filter(d => d.fy === fy)
+}
+
+// "CQN Highest Variance": biggest actual-vs-plan shortfall first, same queue scoping as above.
+export function cqnActualVariance(filters = {}, topN = 5) {
+  const rows = filterQueues({ ...filters, dbOsp: 'All' }).map(q => ({
+    cqn: q.name, actual: q.handled, plan: q.offered,
+    variance: +((q.handled - q.offered) / q.offered * 100).toFixed(1),
+  }))
+  const hasQueue = filters.cqn && filters.cqn !== 'All'
+  return hasQueue ? rows : [...rows].sort((a, b) => a.variance - b.variance).slice(0, topN)
+}
 
 // ── Geo Map (Layer 3) ────────────────────────────────────────────────────────
 export const GEO_REGION_DATA = [
-  { region: 'AMER',  accuracy: 91, lat: 0,    lng: -95,  label: 'AMER' },
+  { region: 'NAMER', accuracy: 91, lat: 0,    lng: -95,  label: 'NAMER' },
   { region: 'EMEA',  accuracy: 79, lat: 50,   lng: 10,   label: 'EMEA' },
   { region: 'APJ',   accuracy: 85, lat: 25,   lng: 100,  label: 'APJ' },
   { region: 'LATAM', accuracy: 68, lat: -15,  lng: -60,  label: 'LATAM' },
 ]
 
 export const GEO_COUNTRY_DATA = [
-  { country: 'USA',         region: 'AMER',  accuracy: 93, lat: 38,   lng: -97 },
-  { country: 'Canada',      region: 'AMER',  accuracy: 88, lat: 57,   lng: -100 },
-  { country: 'Mexico',      region: 'AMER',  accuracy: 82, lat: 24,   lng: -102 },
+  { country: 'USA',         region: 'NAMER', accuracy: 93, lat: 38,   lng: -97 },
+  { country: 'Canada',      region: 'NAMER', accuracy: 88, lat: 57,   lng: -100 },
+  { country: 'Mexico',      region: 'NAMER', accuracy: 82, lat: 24,   lng: -102 },
   { country: 'Brazil',      region: 'LATAM', accuracy: 71, lat: -10,  lng: -55 },
   { country: 'UK',          region: 'EMEA',  accuracy: 85, lat: 53,   lng: -2 },
   { country: 'Germany',     region: 'EMEA',  accuracy: 78, lat: 51,   lng: 10 },
@@ -421,3 +457,13 @@ export const GEO_COUNTRY_DATA = [
   { country: 'Argentina',   region: 'LATAM', accuracy: 65, lat: -34,  lng: -64 },
   { country: 'Colombia',    region: 'LATAM', accuracy: 70, lat: 4,    lng: -72 },
 ]
+
+export function geoRegionData(filters = {}) {
+  const r = filters.region
+  return (!r || r === 'All') ? GEO_REGION_DATA : GEO_REGION_DATA.filter(d => d.region === r)
+}
+
+export function geoCountryData(filters = {}) {
+  const r = filters.region
+  return (!r || r === 'All') ? GEO_COUNTRY_DATA : GEO_COUNTRY_DATA.filter(d => d.region === r)
+}

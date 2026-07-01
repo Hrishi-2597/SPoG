@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { CARD_DATA, ACTIVE_QUEUES } from '../data/mockData'
+import React, { useMemo, useState } from 'react'
+import { cardData, filterQueues } from '../data/mockData'
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -62,7 +62,7 @@ function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active })
   )
 }
 
-function DrillDownPanel({ type, onClose }) {
+function DrillDownPanel({ type, rows, onClose }) {
   return (
     <div className="animate-fade-in" style={{
       marginTop: 10,
@@ -105,7 +105,7 @@ function DrillDownPanel({ type, onClose }) {
             </tr>
           </thead>
           <tbody>
-            {ACTIVE_QUEUES.map((q, i) => {
+            {rows.map((q, i) => {
               const variance = +(q.accuracy - 87).toFixed(1)
               return (
                 <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
@@ -143,9 +143,14 @@ function DrillDownPanel({ type, onClose }) {
   )
 }
 
-export default function MetricCards() {
+export default function MetricCards({ filters }) {
   const [active, setActive] = useState(null)
-  const d = CARD_DATA
+  const d = useMemo(() => cardData(filters), [filters])
+  // "queues"/"forecast"/"variance" drill down into queue portfolio health (DB/OSP-agnostic,
+  // matching cardData's own structuralRows); "volume"/"dbOsp" drill into the DB/OSP-scoped view.
+  const structuralRows = useMemo(() => filterQueues({ ...filters, dbOsp: 'All' }), [filters])
+  const volumeRows = useMemo(() => filterQueues(filters), [filters])
+  const rows = active === 'volume' || active === 'dbOsp' ? volumeRows : structuralRows
   const toggle = key => setActive(prev => prev === key ? null : key)
 
   return (
@@ -186,7 +191,7 @@ export default function MetricCards() {
         />
       </div>
 
-      {active && <DrillDownPanel type={active} onClose={() => setActive(null)} />}
+      {active && <DrillDownPanel type={active} rows={rows} onClose={() => setActive(null)} />}
     </div>
   )
 }
