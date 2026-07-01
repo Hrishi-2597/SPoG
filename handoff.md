@@ -102,7 +102,7 @@ Each card's pop-up went from a raw table to an actual chart matching what the ca
 
 | Card | Drill-down now shows |
 |---|---|
-| Total Queues | Region breakdown bar chart on top (click a region bar to filter the table below to just that region's queues; click again, or "Clear", to reset) |
+| Total Queues | Region breakdown donut chart on top (click a slice, or its legend entry, to filter the table below to just that region's queues; click again, or "Clear", to reset) |
 | Call Volume | Bar chart: Offered vs Handled, by Fiscal Year (raw numbers, no %) |
 | DB / OSP Split | Bar chart: DB Offered vs OSP Offered, by Fiscal Year — deliberately ignores the ambient DB/OSP filter (showing the split IS the point; collapsing to one bar when the filter is "DB" would defeat it) |
 | Forecast Accuracy | Bar+line chart: Actual vs Forecast volume per region (APJ/EMEA/Global/LATAM/NAMER), with a Forecast Accuracy % line on a second axis |

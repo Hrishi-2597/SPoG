@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import {
-  BarChart, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  BarChart, ComposedChart, PieChart, Pie, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
 import {
@@ -13,6 +13,9 @@ const C = { offered: '#38bdf8', handled: '#34d399', db: '#38bdf8', osp: '#fb923c
 // full dashboard width with huge gaps between bar groups.
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
 const BAR_GAPS = { barCategoryGap: '20%', barGap: 6 }
+// Distinct categorical colors for the region donut — deliberately avoids green/red,
+// which are reserved elsewhere for ahead-of-plan/behind-plan semantics.
+const REGION_COLORS = { APJ: '#38bdf8', EMEA: '#fb923c', Global: '#a78bfa', LATAM: '#22d3ee', NAMER: '#fbbf24' }
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -96,23 +99,45 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
       .map(([region, count]) => ({ region, count }))
       .sort((a, b) => b.count - a.count)
   }, [rows])
+  const total = rows.length
+  const centerCount = selectedRegion ? (data.find(d => d.region === selectedRegion)?.count ?? 0) : total
+
   return (
-    <div style={CHART_BOX}>
-      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a region to see its queues</p>
-      <ResponsiveContainer width="100%" height={160}>
-        <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} barCategoryGap="30%">
-          <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
-          <XAxis dataKey="region" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-          <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.06)' }} />
-          <Bar dataKey="count" name="Queues" radius={[4,4,0,0]} maxBarSize={54}
+    <div style={{ ...CHART_BOX, position: 'relative' }}>
+      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a slice to see that region's queues</p>
+      <ResponsiveContainer width="100%" height={230}>
+        <PieChart>
+          <Tooltip content={({ active, payload }) => {
+            if (!active || !payload?.length) return null
+            const { region, count } = payload[0].payload
+            return (
+              <div className="chart-tooltip">
+                <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || '#38bdf8', marginBottom: 3 }}>{region}</p>
+                <p style={{ fontSize: 11, color: '#cfe8fb' }}>{count} queues <span style={{ color: '#5a8bb0' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
+              </div>
+            )
+          }} />
+          <Legend verticalAlign="bottom" height={30}
+            onClick={e => onSelectRegion(e.value)}
+            wrapperStyle={{ fontSize: 10, color: C.tick, cursor: 'pointer' }} />
+          <Pie data={data} dataKey="count" nameKey="region" cx="50%" cy="46%"
+            innerRadius={54} outerRadius={82} paddingAngle={2}
             onClick={d => onSelectRegion(d.region)} style={{ cursor: 'pointer' }}>
             {data.map((d, i) => (
-              <Cell key={i} fill="#38bdf8" opacity={selectedRegion == null || selectedRegion === d.region ? 0.85 : 0.3} />
+              <Cell key={i} fill={REGION_COLORS[d.region] || C.tick}
+                stroke="#0c1929" strokeWidth={2}
+                opacity={selectedRegion == null || selectedRegion === d.region ? 0.92 : 0.25} />
             ))}
-          </Bar>
-        </BarChart>
+          </Pie>
+        </PieChart>
       </ResponsiveContainer>
+      <div style={{
+        position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)',
+        textAlign: 'center', pointerEvents: 'none',
+      }}>
+        <p className="num" style={{ fontSize: 19, fontWeight: 700, color: '#e6f1ff', lineHeight: 1 }}>{centerCount}</p>
+        <p style={{ fontSize: 9, color: '#5a8bb0', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
+      </div>
     </div>
   )
 }
