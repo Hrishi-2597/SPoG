@@ -98,7 +98,7 @@ Each card's pop-up went from a raw table to an actual chart matching what the ca
 |---|---|
 | Total Queues | Unchanged — the queue list table |
 | Call Volume | Bar chart: Offered vs Handled, by Fiscal Year (raw numbers, no %) |
-| DB / OSP Split | Same Offered-vs-Handled-by-FY chart, but scoped by whichever DB/OSP filter is active (so it always matches the card above it) |
+| DB / OSP Split | Bar chart: DB Offered vs OSP Offered, by Fiscal Year — deliberately ignores the ambient DB/OSP filter (showing the split IS the point; collapsing to one bar when the filter is "DB" would defeat it) |
 | Forecast Accuracy | Bar+line chart: Actual vs Forecast volume per region (APJ/EMEA/Global/LATAM/NAMER), with a Forecast Accuracy % line on a second axis |
 | CQN Variance | Bar chart: % of queues within ±10% variance, year on year (FY25/26/27) — **click a year's bar** to open a pop-up listing 4–5 example queues in that band for the current filter scope |
 

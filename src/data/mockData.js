@@ -368,8 +368,7 @@ const BASE_CALL_VOLUME_BY_FY = {
   FY27: { offered: 107400, handled: 101000 },
 }
 
-// Drives both the Call Volume and DB/OSP Split card drill-downs — DB/OSP scopes this
-// exactly like the card itself does, so the chart always matches what the card shows.
+// Drives the Call Volume card drill-down: Offered vs Handled, by Fiscal Year.
 export function callVolumeByFY(filters = {}) {
   const rows = filterQueues(filters)
   const ratio = ACTIVE_QUEUES.length ? rows.length / ACTIVE_QUEUES.length : 0
@@ -380,6 +379,27 @@ export function callVolumeByFY(filters = {}) {
     offered: Math.round(BASE_CALL_VOLUME_BY_FY[year].offered * ratio),
     handled: Math.round(BASE_CALL_VOLUME_BY_FY[year].handled * ratio),
   }))
+}
+
+// Drives the DB/OSP Split card drill-down: DB vs OSP offered volume, by Fiscal Year.
+// Deliberately ignores the DB/OSP filter itself (unlike callVolumeByFY) — collapsing to
+// one bar when the ambient filter is "DB" would defeat the point of a split chart. Every
+// other filter (region, queue, etc.) still narrows the candidate queues.
+export function dbOspVolumeByFY(filters = {}) {
+  const rows = filterQueues({ ...filters, dbOsp: 'All' })
+  const total = ACTIVE_QUEUES.length
+  const ratio = total ? rows.length / total : 0
+  const dbShare = rows.length ? rows.filter(q => q.dbOsp === 'DB').length / rows.length : 0
+  const fy = effectiveFiscalYear(filters)
+  const years = fy === 'All' ? FISCAL_YEARS : [fy]
+  return years.map(year => {
+    const totalOffered = Math.round(BASE_CALL_VOLUME_BY_FY[year].offered * ratio)
+    return {
+      period: year,
+      db: Math.round(totalOffered * dbShare),
+      osp: Math.round(totalOffered * (1 - dbShare)),
+    }
+  })
 }
 
 // ── Forecast Accuracy by Region ───────────────────────────────────────────────

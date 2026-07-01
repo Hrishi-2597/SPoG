@@ -143,8 +143,10 @@ cardData(filters) → {
 ```
 callVolumeByFY(filters) — {period, offered, handled} per FY, narrowed to effectiveFiscalYear(filters);
   scaled by filterQueues(filters).length/199 off a per-FY baseline (BASE_CALL_VOLUME_BY_FY) that
-  sums to the same 285.4K/268.7K totals as cardData's callVolume. Backs both the Call Volume and
-  DB/OSP Split drill-downs — DB/OSP scopes it exactly like the cards above it.
+  sums to the same 285.4K/268.7K totals as cardData's callVolume. Backs the Call Volume drill-down.
+dbOspVolumeByFY(filters) — {period, db, osp} per FY: same BASE_CALL_VOLUME_BY_FY.offered baseline,
+  split by each in-scope queue's dbOsp tag. Ignores filters.dbOsp itself (unlike callVolumeByFY) —
+  every other filter still narrows the candidate queues. Backs the DB/OSP Split drill-down.
 FORECAST_ACCURACY_BY_REGION / forecastAccuracyByRegion(filters) — {region, actual, forecast, accuracy}
   ×5 regions, static, narrowed to filters.region. Backs the Forecast Accuracy drill-down
   (bar: actual/forecast, line: accuracy% on a second axis).
