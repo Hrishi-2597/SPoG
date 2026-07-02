@@ -30,8 +30,9 @@ SPoG/
 │       └── deploy.yml          # CI/CD: build → push to gh-pages branch
 ├── src/
 │   ├── main.jsx                # React root mount
-│   ├── App.jsx                 # Shell: header + page toggle (ESG Forecasting/HES Forecasting) + footer
-│   ├── index.css               # Tailwind imports + global scrollbar/select styles
+│   ├── App.jsx                 # Shell: header + page toggle + theme toggle + footer
+│   ├── index.css               # Tailwind imports + theme CSS variables (:root / [data-theme='light']) +
+│   │                              global scrollbar/select/card/tooltip/etc. component classes
 │   ├── components/
 │   │   ├── ForecastingPage.jsx # ESG Forecasting page body (filters + cards + 3 layers + RCA/CLCA sidebar)
 │   │   ├── SectionDivider.jsx  # Shared "KEY METRICS" / "ANALYSIS LAYERS" section label, used by both pages
@@ -125,13 +126,42 @@ HesRcaClcaPanel — sticky sidebar (position: sticky) alongside the 4 layers abo
 
 ---
 
+## Theming (2026-07-02)
+
+CSS custom properties in `src/index.css`, not a second stylesheet or CSS-in-JS. `:root` defines the dark
+(default) values; `[data-theme='light']` on `<html>` overrides them. `App.jsx` owns the `theme` state
+(`'dark'|'light'`), applies the attribute, and persists the choice to `localStorage` (`isg-spog-theme`) —
+set inside the `useState` initializer (not a `useEffect`) so the attribute is applied before first paint,
+avoiding a flash of the wrong theme.
+
+```
+--bg-page / --bg-panel / --bg-raised / --bg-inset     — 4 background depth levels
+--border-subtle / --border-default / --border-strong  — border opacity tiers
+--text-primary / --text-secondary / --text-dim / --text-faint / --text-muted — text hierarchy
+--accent, --accent-contrast                            — brand accent + its readable-on-fill text color
+--accent-dim, --accent-glow                            — low-opacity accent tints
+--tooltip-bg, --chart-grid, --select-bg(-hover)         — component-specific tokens
+--scrollbar-track/-thumb(-hover), --shadow-card(-hover/-active) — misc
+```
+
+Every shared CSS class (`.card-panel`, `.chart-panel`, `.layer-header`, `.select-dark`, `.ms-*`,
+`.filter-chip`, `.drill-toggle`/`.drill-btn`, `.chart-tooltip`, `.theme-toggle`, scrollbars, `body`) and
+almost every component's inline background/border/text-color style reference these variables instead of
+hardcoded hex — see `design_choice.md` for the full file list and the categories left un-themed on
+purpose (chart series/data colors, region palettes, the geo accuracy scale, status badges, geo map
+canvases). `.select-dark`'s embedded data-URI chevron SVG is the one exception that structurally can't
+follow the theme (a baked-in `stroke` inside a `background-image: url("data:image/svg+xml,...")` can't
+reference a page-level CSS variable) — it uses a fixed neutral slate that reads acceptably on both.
+
+---
+
 ## State Management
 
 No external state library. All state is local React `useState`:
 
 | Component | State | Type |
 |---|---|---|
-| `App` | `page` ('forecasting'\|'hes') | String |
+| `App` | `page` ('forecasting'\|'hes'); `theme` ('dark'\|'light', persisted to localStorage) | String, String |
 | `ForecastingPage` | `filters` | Object (12 filter keys) |
 | `MetricCards` | `active` (which card's modal is open) | String or null |
 | `Layer1PlanOverPlan` | `plans` (planA/planB, reset by `filters.planName` via `useEffect`), `open` | Object, Boolean |

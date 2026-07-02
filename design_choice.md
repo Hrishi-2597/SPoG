@@ -371,6 +371,30 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## Filter Bar Gap Fix + Light/Dark Theme Toggle (2026-07-02)
+
+### HES filter bar gap: match the Forecasting page's already-correct flex pattern
+**Decision:** Added `flex-1 min-w-0` to `HesFilterPanel.jsx`'s `Cluster` grid div, mirroring `FilterPanel.jsx`'s `Cluster` (`className="grid grid-cols-3 gap-x-3 flex-1 min-w-0"`).
+**Why:** The Time cluster's outer wrapper correctly received extra width via `flex: 4 4 0`, but the grid div inside it — a plain flex child with no `flex-grow` of its own — doesn't inherit that width automatically; it sizes to its own content and leaves the parent's allocated-but-unclaimed space as a visible gap before the next cluster. The Forecasting page's filter bar never had this bug because its `Cluster` already included the class; HES's was written slightly differently when the page was first built and missed it.
+
+### CSS custom properties, not a second stylesheet or a CSS-in-JS library
+**Decision:** Theme values live as CSS custom properties in `:root` (dark) and `[data-theme='light']` (`src/index.css`), toggled by setting a `data-theme` attribute on `<html>`. No new dependency, no duplicated stylesheet, no per-component theme prop drilling.
+**Why:** Every shared visual "chrome" class (`.card-panel`, `.chart-panel`, `.select-dark`, etc.) already lived in one CSS file — swapping their hardcoded hex for `var(--token)` and adding one override block gets both pages reskinned from a single source of truth. Persisting the choice to `localStorage` and applying the attribute inside `App.jsx`'s `useState` initializer (not a `useEffect`) avoids a flash of the wrong theme on load, since it runs before first paint.
+
+### Chart/data colors stay constant across themes; only "chrome" switches
+**Decision:** Backgrounds, borders, and primary/secondary/muted/faint text all reroute through theme variables. Chart series colors (the blue/orange/violet role assignments), the ahead/red-behind convention, region color palettes, the geo accuracy color scale (green/blue/orange/red), status badges, and the "01/02/03/04" layer-number badges keep their exact literal hex in both themes.
+**Why:** These are meaningful data-encoding colors, not decoration — the same convention most ops dashboards (Grafana, Datadog) use: light/dark mode changes the canvas, not what a color *means*. Re-deriving the whole data palette per theme would risk breaking the "if it's red, something is behind plan" vocabulary established across both pages' design history, for a benefit (perfect light-mode chart hues) that doesn't materially help readability — every one of these colors already has enough contrast against both a near-white and a navy background.
+
+### Geo maps keep an always-dark canvas regardless of theme
+**Decision:** `Layer3GeoMap.jsx` and `HesGeoMap.jsx`'s map container (background, `DEFAULT_FILL`, country stroke/fill, the bottom accuracy-scale gradient, and the "no data" empty-state text) stay hardcoded dark in both themes. Only the chrome *around* the map (layer header, legend, summary table, the floating hover tooltip) follows the theme.
+**Why:** A choropleth's fill colors are calibrated against a specific backdrop — flipping the canvas to white would wash out `DEFAULT_FILL` (the "no data" gray) and change how the accuracy colors read, without a proportional benefit. Keeping the map itself a dark "instrument panel" is a common pattern for embedded map/geo visuals regardless of host UI theme (weather widgets, ops dashboards). The floating hover tooltip is a separate element using the shared `.chart-tooltip` class, so it still re-themes correctly even though it sits visually on top of the fixed-dark map.
+
+### `--accent` itself changes value between themes, with a paired `--accent-contrast`
+**Decision:** `--accent` is `#38bdf8` (bright sky blue) in dark mode but `#0284c7` (a deeper, more saturated blue) in light mode; a separate `--accent-contrast` token (`#070f1a` dark / `#ffffff` light) is used wherever text sits *on top of* a solid accent fill (e.g. the active pill-toggle state).
+**Why:** `#38bdf8` directly on a near-white page background has poor text contrast (it's barely darker than white) — the sun/moon toggle's own label color, `SectionDivider`'s "ANALYSIS LAYERS" label, and similar accent-as-text usages needed a deeper blue in light mode to stay legible. But that same deeper blue needs light text on top of it (not the dark navy text that works against the *bright* dark-mode accent) — hence the separate contrast token instead of a single hardcoded value.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |

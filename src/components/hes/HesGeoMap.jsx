@@ -29,26 +29,26 @@ export default function HesGeoMap({ filters }) {
   const accuracyByRegion = useMemo(() => Object.fromEntries(rows.map(r => [r.region, r.adherence])), [rows])
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#a78bfa', borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em' }}>04</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Geo Map</span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— LOB adherence by region</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Geo Map</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— LOB adherence by region</span>
         </div>
         <span style={{ fontSize: 11, color: '#a78bfa', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>
 
       {open && (
         <div style={{ padding: 14 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#e6f1ff', textAlign: 'center' }}>Global LOB Adherence Heatmap</p>
-          <p style={{ fontSize: 10, color: '#3d607a', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>Global LOB Adherence Heatmap</p>
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
             Adherence % · {filters.lob?.length ? `${filters.lob.length} LOB${filters.lob.length === 1 ? '' : 's'} selected` : 'All LOBs (avg)'}
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
             {LEGEND.map(({ label, color }) => (
-              <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#7fa8cc' }}>
+              <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--text-dim)' }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: color, display: 'inline-block', boxShadow: `0 0 6px ${color}80` }} />
                 {label}
               </span>
@@ -60,10 +60,10 @@ export default function HesGeoMap({ filters }) {
 
             {hovered && (
               <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }} className="chart-tooltip">
-                <p style={{ fontWeight: 700, color: '#38bdf8', fontSize: 11 }}>{hovered.name}</p>
+                <p style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 11 }}>{hovered.name}</p>
                 <p style={{ marginTop: 3, fontSize: 13, fontWeight: 700, color: acColor(hovered.accuracy) }}>
                   {hovered.accuracy}%
-                  <span style={{ fontSize: 9, color: '#7fa8cc', fontWeight: 400, marginLeft: 5 }}>adherence</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-dim)', fontWeight: 400, marginLeft: 5 }}>adherence</span>
                 </p>
               </div>
             )}
@@ -102,10 +102,10 @@ export default function HesGeoMap({ filters }) {
           <div style={{ marginTop: 10, overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   {['Region', 'Adherence', 'Status'].map((h, i) => (
                     <th key={h} style={{ textAlign: i === 0 ? 'left' : 'right', padding: '5px 10px 5px 0',
-                      fontSize: 9, color: '#3d607a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                      fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -115,10 +115,10 @@ export default function HesGeoMap({ filters }) {
                   const status = r.adherence >= 90 ? 'Excellent' : r.adherence >= 80 ? 'Good' : r.adherence >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = r.adherence >= 80 ? 'badge-good' : r.adherence >= 70 ? 'badge-warn' : 'badge-bad'
                   return (
-                    <tr key={r.region} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                    <tr key={r.region} style={{ borderBottom: '1px solid var(--border-subtle)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: '#e6f1ff', fontWeight: 500 }}>{r.region}</td>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{r.region}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{r.adherence}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}><span className={`badge ${badgeCls}`}>{status}</span></td>
                     </tr>

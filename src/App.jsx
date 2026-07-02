@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ForecastingPage from './components/ForecastingPage'
 import HesForecastingPage from './components/hes/HesForecastingPage'
 
@@ -6,6 +6,8 @@ const PAGES = [
   { key: 'forecasting', label: 'ESG Forecasting' },
   { key: 'hes', label: 'HES Forecasting' },
 ]
+
+const THEME_KEY = 'isg-spog-theme'
 
 function PageToggle({ page, setPage }) {
   return (
@@ -19,17 +21,61 @@ function PageToggle({ page, setPage }) {
   )
 }
 
+// Sun/moon pill switch, mirroring the same knob-slide pattern as HesGeoMap's
+// Region/Sub-region toggle rather than inventing a new interaction for "flip a
+// binary setting."
+function ThemeToggle({ theme, onToggle }) {
+  const isLight = theme === 'light'
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={onToggle}
+      aria-label={`Switch to ${isLight ? 'dark' : 'light'} mode`}
+      title={`Switch to ${isLight ? 'dark' : 'light'} mode`}
+    >
+      <span className="theme-toggle-knob">
+        {isLight ? (
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="4.5" fill="var(--accent-contrast)" />
+            <g stroke="var(--accent-contrast)" strokeWidth="2.4" strokeLinecap="round">
+              <path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8" />
+            </g>
+          </svg>
+        ) : (
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79Z" fill="var(--accent-contrast)" />
+          </svg>
+        )}
+      </span>
+    </button>
+  )
+}
+
 export default function App() {
   const [page, setPage] = useState('forecasting')
+  // Reading + applying the saved theme inside the initializer (not a useEffect)
+  // sets the data-theme attribute before first paint, avoiding a dark->light flash.
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', saved)
+    return saved
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
+
   const pageLabel = PAGES.find(p => p.key === page)?.label
 
   return (
-    <div className="min-h-screen" style={{ background: '#070f1a', color: '#e6f1ff' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg-page)', color: 'var(--text-primary)', transition: 'background-color 0.2s ease, color 0.2s ease' }}>
 
       {/* ── Header ───────────────────────────────────────────────── */}
       <header style={{
-        background: 'linear-gradient(180deg, #0e1e30 0%, #0c1929 100%)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        background: 'linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-panel) 100%)',
+        borderBottom: '1px solid var(--border-default)',
       }} className="px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Logo mark */}
@@ -47,10 +93,10 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 style={{ fontSize: 13, fontWeight: 700, color: '#e6f1ff', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+            <h1 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
               ISG SPoG
             </h1>
-            <p style={{ fontSize: 10, color: '#7fa8cc', marginTop: 1 }}>
+            <p style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>
               Enterprise Service Group · {pageLabel}
             </p>
           </div>
@@ -58,7 +104,8 @@ export default function App() {
 
         <div className="flex items-center gap-4">
           <PageToggle page={page} setPage={setPage} />
-          <div style={{ fontSize: 10, color: '#7fa8cc', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <ThemeToggle theme={theme} onToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{
               width: 6, height: 6, borderRadius: '50%', background: '#34d399',
               display: 'inline-block', boxShadow: '0 0 6px #34d399',
@@ -66,8 +113,8 @@ export default function App() {
             Live · FY26
           </div>
           <div style={{
-            fontSize: 10, fontWeight: 600, color: '#38bdf8',
-            background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)',
+            fontSize: 10, fontWeight: 600, color: 'var(--accent)',
+            background: 'var(--accent-dim)', border: '1px solid rgba(56,189,248,0.2)',
             borderRadius: 5, padding: '3px 9px',
           }}>
             ISG ESG
@@ -76,13 +123,13 @@ export default function App() {
       </header>
 
       {/* Accent line under header */}
-      <div style={{ height: 1, background: 'linear-gradient(90deg, #38bdf8 0%, rgba(56,189,248,0.1) 40%, transparent 70%)' }} />
+      <div style={{ height: 1, background: 'linear-gradient(90deg, var(--accent) 0%, rgba(56,189,248,0.1) 40%, transparent 70%)' }} />
 
       {page === 'forecasting' ? <ForecastingPage /> : <HesForecastingPage />}
 
       <footer style={{
-        textAlign: 'center', fontSize: 10, color: '#3d607a',
-        padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.04)',
+        textAlign: 'center', fontSize: 10, color: 'var(--text-muted)',
+        padding: '12px 0', borderTop: '1px solid var(--border-subtle)',
       }}>
         ISG SPoG · Enterprise Service Group · © 2026 Aligned Automation Services
       </footer>

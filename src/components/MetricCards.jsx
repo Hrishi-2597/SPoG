@@ -11,14 +11,14 @@ import { Modal } from './Modal'
 
 // pct: violet for the "% trend line" role — matches the app-wide convention that
 // neutral analytical lines get violet, since green/handled already means something else here.
-const C = { offered: '#38bdf8', handled: '#34d399', db: '#38bdf8', osp: '#fb923c', actual: '#38bdf8', forecast: '#fb923c', line: '#34d399', pct: '#a78bfa', grid: 'rgba(255,255,255,0.06)', tick: '#4a6a85' }
+const C = { offered: 'var(--accent)', handled: '#34d399', db: 'var(--accent)', osp: '#fb923c', actual: 'var(--accent)', forecast: '#fb923c', line: '#34d399', pct: '#a78bfa', grid: 'var(--chart-grid)', tick: '#4a6a85' }
 // Chart drill-downs are capped and centered so 3-5 categories don't stretch across the
 // full dashboard width with huge gaps between bar groups.
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
 const BAR_GAPS = { barCategoryGap: '20%', barGap: 6 }
 // Distinct categorical colors for the region donut — deliberately avoids green/red,
 // which are reserved elsewhere for ahead-of-plan/behind-plan semantics.
-const REGION_COLORS = { APJ: '#38bdf8', EMEA: '#fb923c', Global: '#a78bfa', LATAM: '#22d3ee', NAMER: '#fbbf24' }
+const REGION_COLORS = { APJ: 'var(--accent)', EMEA: '#fb923c', Global: '#a78bfa', LATAM: '#22d3ee', NAMER: '#fbbf24' }
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -46,22 +46,22 @@ function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active })
     >
       <div style={{
         padding: '8px 12px 6px',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#e6f1ff', lineHeight: 1.2 }}>{label}</p>
-          {sublabel && <p style={{ fontSize: 9, color: '#3d607a', marginTop: 1 }}>{sublabel}</p>}
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{label}</p>
+          {sublabel && <p style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 1 }}>{sublabel}</p>}
         </div>
       </div>
 
       <div style={{ padding: '8px 12px 10px', flex: 1 }}>
-        <p className="num" style={{ fontSize: 20, fontWeight: 700, color: '#e6f1ff', lineHeight: 1, letterSpacing: '-0.02em' }}>
+        <p className="num" style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
           {value}
         </p>
         {sub && (
-          <p style={{ fontSize: 10, color: '#7fa8cc', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <p style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
             {trend !== undefined && <StatusPip ok={trend} />}
             {sub}
           </p>
@@ -70,7 +70,7 @@ function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active })
 
       {active && (
         <div style={{
-          height: 2, background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)',
+          height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
           marginTop: 'auto',
         }} />
       )}
@@ -82,7 +82,7 @@ const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div className="chart-tooltip">
-      <p style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', marginBottom: 5 }}>{label}</p>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 5 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ fontSize: 11, color: p.color, marginBottom: 2 }}>
           {p.name}: <span style={{ fontWeight: 600 }}>
@@ -107,7 +107,7 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
 
   return (
     <div style={{ ...CHART_BOX, position: 'relative' }}>
-      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a slice to see that region's queues</p>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 6, textAlign: 'center' }}>Click a slice to see that region's queues</p>
       <ResponsiveContainer width="100%" height={230}>
         <PieChart>
           <Tooltip content={({ active, payload }) => {
@@ -115,8 +115,8 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
             const { region, count } = payload[0].payload
             return (
               <div className="chart-tooltip">
-                <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || '#38bdf8', marginBottom: 3 }}>{region}</p>
-                <p style={{ fontSize: 11, color: '#cfe8fb' }}>{count} queues <span style={{ color: '#5a8bb0' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || 'var(--accent)', marginBottom: 3 }}>{region}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{count} queues <span style={{ color: 'var(--text-faint)' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
               </div>
             )
           }} />
@@ -128,7 +128,7 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
             onClick={d => onSelectRegion(d.region)} style={{ cursor: 'pointer' }}>
             {data.map((d, i) => (
               <Cell key={i} fill={REGION_COLORS[d.region] || C.tick}
-                stroke="#0c1929" strokeWidth={2}
+                stroke="var(--bg-panel)" strokeWidth={2}
                 opacity={selectedRegion == null || selectedRegion === d.region ? 0.92 : 0.25} />
             ))}
           </Pie>
@@ -138,8 +138,8 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
         position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)',
         textAlign: 'center', pointerEvents: 'none',
       }}>
-        <p className="num" style={{ fontSize: 19, fontWeight: 700, color: '#e6f1ff', lineHeight: 1 }}>{centerCount}</p>
-        <p style={{ fontSize: 9, color: '#5a8bb0', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
+        <p className="num" style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{centerCount}</p>
+        <p style={{ fontSize: 9, color: 'var(--text-faint)', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
       </div>
     </div>
   )
@@ -153,12 +153,12 @@ function QueuesSection({ rows }) {
       <QueuesByRegionChart rows={rows} selectedRegion={selectedRegion}
         onSelectRegion={r => setSelectedRegion(prev => prev === r ? null : r)} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 6px' }}>
-        <p style={{ fontSize: 10, color: '#5a8bb0' }}>
-          {selectedRegion ? <><span style={{ color: '#38bdf8', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
+        <p style={{ fontSize: 10, color: 'var(--text-faint)' }}>
+          {selectedRegion ? <><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
         </p>
         {selectedRegion && (
           <button onClick={() => setSelectedRegion(null)} style={{
-            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 10, color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer',
             textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
           }}>Clear</button>
         )}
@@ -173,19 +173,19 @@ function QueueTable({ rows }) {
     <div style={{ overflowX: 'auto', maxHeight: 220, overflowY: 'auto' }}>
       <table className="w-full" style={{ fontSize: 11, borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
-            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Region</th>
-            <th style={{ textAlign: 'right', padding: '4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Accuracy</th>
+          <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
+            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
+            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Region</th>
+            <th style={{ textAlign: 'right', padding: '4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Accuracy</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((q, i) => (
-            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+            <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.05)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <td style={{ padding: '5px 12px 5px 0', fontFamily: 'monospace', fontSize: 10, color: '#7fa8cc' }}>{q.name}</td>
-              <td style={{ padding: '5px 12px 5px 0', color: '#3d607a' }}>{q.region}</td>
+              <td style={{ padding: '5px 12px 5px 0', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-dim)' }}>{q.name}</td>
+              <td style={{ padding: '5px 12px 5px 0', color: 'var(--text-muted)' }}>{q.region}</td>
               <td className="num" style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600,
                 color: q.accuracy >= 90 ? '#34d399' : q.accuracy >= 80 ? '#fbbf24' : '#f87171' }}>
                 {q.accuracy}%
@@ -271,7 +271,7 @@ function ForecastByRegionChart({ filters }) {
 function VarianceByFYChart({ filters, onSelectYear }) {
   return (
     <div style={CHART_BOX}>
-      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a year to see example queues within the ±10% band</p>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 6, textAlign: 'center' }}>Click a year to see example queues within the ±10% band</p>
       <ResponsiveContainer width="100%" height={205}>
         <BarChart data={CQN_VARIANCE_BY_FY} margin={{ top: 4, right: 16, left: 0, bottom: 0 }} barCategoryGap="30%">
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
@@ -281,7 +281,7 @@ function VarianceByFYChart({ filters, onSelectYear }) {
           <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.06)' }} />
           <Bar dataKey="pct" name="Within ±10%" radius={[4,4,0,0]} maxBarSize={90}
             onClick={d => onSelectYear(d.fy)} style={{ cursor: 'pointer' }}>
-            {CQN_VARIANCE_BY_FY.map((d, i) => <Cell key={i} fill="#38bdf8" opacity={0.85} />)}
+            {CQN_VARIANCE_BY_FY.map((d, i) => <Cell key={i} fill="var(--accent)" opacity={0.85} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -303,29 +303,29 @@ function YearQueueModal({ fy, filters, onClose }) {
         onClick={e => e.stopPropagation()}
         className="animate-fade-in"
         style={{
-          background: '#0c1929', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10,
+          background: 'var(--bg-panel)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10,
           padding: '16px 18px', width: 380, boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(56,189,248,0.08)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h3 style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8' }}>{fy} — Queues within ±10% variance</h3>
-          <button onClick={onClose} style={{ color: '#3d607a', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+          <h3 style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{fy} — Queues within ±10% variance</h3>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
         </div>
-        <p style={{ fontSize: 10, color: '#5a8bb0', marginBottom: 10 }}>Representative sample from the current filter scope</p>
+        <p style={{ fontSize: 10, color: 'var(--text-faint)', marginBottom: 10 }}>Representative sample from the current filter scope</p>
         {queues.length === 0 ? (
-          <p style={{ fontSize: 11, color: '#3d607a', padding: '12px 0' }}>No queues in the current filter scope.</p>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', padding: '12px 0' }}>No queues in the current filter scope.</p>
         ) : (
           <table className="w-full" style={{ fontSize: 11, borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
-                <th style={{ textAlign: 'right', padding: '4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Variance</th>
+              <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
+                <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
+                <th style={{ textAlign: 'right', padding: '4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Variance</th>
               </tr>
             </thead>
             <tbody>
               {queues.map((q, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <td style={{ padding: '6px 12px 6px 0', fontFamily: 'monospace', fontSize: 10, color: '#cfe8fb' }}>{q.name}</td>
+                <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <td style={{ padding: '6px 12px 6px 0', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-secondary)' }}>{q.name}</td>
                   <td className="num" style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: '#34d399' }}>
                     {q.variance > 0 ? '+' : ''}{q.variance}%
                   </td>

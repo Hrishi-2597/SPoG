@@ -109,9 +109,9 @@ function Visual3({ filters }) {
                 display: 'flex', justifyContent: 'space-between', fontSize: 11.5, padding: '5px 8px',
                 background: i % 2 ? 'transparent' : 'rgba(255,255,255,0.03)', borderRadius: 5,
               }}>
-                <span style={{ color: '#cfe8fb' }}>{l.lob}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{l.lob}</span>
                 <span style={{ fontWeight: 600, color: C.behind }}>
-                  {l.runrate}% <span style={{ color: '#5a8bb0', fontWeight: 400 }}>vs {l.target}%</span>
+                  {l.runrate}% <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>vs {l.target}%</span>
                 </span>
               </div>
             ))}
@@ -126,12 +126,12 @@ export default function AsuSrTrendLayer({ filters }) {
   const [open, setOpen] = useState(true)
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#fb923c', borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em' }}>03</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ASU/UCR Impact on SR Analysis</span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— CPASU &amp; UCR runrate</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ASU/UCR Impact on SR Analysis</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— CPASU &amp; UCR runrate</span>
         </div>
         <span style={{ fontSize: 11, color: '#fb923c', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>

@@ -13,7 +13,7 @@ const ICONS = {
 
 function ClusterIcon({ name }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#3d78a3', flexShrink: 0 }}>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
       {ICONS[name]}
     </svg>
   )
@@ -23,7 +23,7 @@ function Cluster({ icon, cols, children }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flex: cols === 1 ? '0 0 auto' : `${cols} ${cols} 0` }}>
       <div style={{ paddingBottom: 6 }}><ClusterIcon name={icon} /></div>
-      <div className="grid gap-x-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cols === 1 ? 160 : 110}px, 1fr))` }}>
+      <div className="grid gap-x-3 flex-1 min-w-0" style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cols === 1 ? 160 : 110}px, 1fr))` }}>
         {children}
       </div>
     </div>
@@ -57,8 +57,8 @@ export default function HesFilterPanel({ filters, onChange }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, #0c1929 0%, #0a1522 100%)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      background: 'linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-inset) 100%)',
+      borderBottom: '1px solid var(--border-subtle)',
       padding: '11px 18px 12px',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -72,19 +72,19 @@ export default function HesFilterPanel({ filters, onChange }) {
       </div>
 
       {activeFilters.length > 0 && (
-        <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize: 8.5, fontWeight: 600, color: '#3d607a', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
+        <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid var(--border-subtle)' }}>
+          <span style={{ fontSize: 8.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
             Scoped by
           </span>
           {activeFilters.map(k => (
             <span key={k} className="filter-chip">
-              <span style={{ color: '#5a8bb0' }}>{defs[k].label}:</span>{' '}
+              <span style={{ color: 'var(--text-faint)' }}>{defs[k].label}:</span>{' '}
               {filters[k].length === 1 ? filters[k][0] : `${filters[k].length} selected`}
               <button onClick={() => set(k)([])} aria-label={`Clear ${defs[k].label}`}>×</button>
             </span>
           ))}
           <button onClick={clearAll} style={{
-            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 10, color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer',
             marginLeft: 4, textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
           }}>
             Clear all

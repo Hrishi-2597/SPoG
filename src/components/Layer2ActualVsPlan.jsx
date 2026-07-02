@@ -6,7 +6,7 @@ import {
 import { PLAN_NAMES, actualVsPlanByFY, stackedAdherenceByFY, cqnActualVariance, filterQueues } from '../data/mockData'
 
 const PLANS = PLAN_NAMES.filter(p => p !== 'Actual')
-const C = { actual: '#38bdf8', plan: '#fb923c', line: '#34d399', ahead: '#34d399', behind: '#f87171', grid: 'rgba(255,255,255,0.05)', tick: '#4a6a85' }
+const C = { actual: '#38bdf8', plan: '#fb923c', line: '#34d399', ahead: '#34d399', behind: '#f87171', grid: 'var(--chart-grid)', tick: '#4a6a85' }
 // Graduated severity scale — green (tight to plan) through red (way off), matching the
 // new "how far off plan" bucketing instead of the old absolute accuracy tiers.
 const STACK = { under10: '#34d399', between10and20: '#38bdf8', between20and30: '#fbbf24', above30: '#f87171' }
@@ -22,7 +22,7 @@ const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div className="chart-tooltip">
-      <p style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', marginBottom: 5 }}>{label}</p>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 5 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ fontSize: 11, color: p.color, marginBottom: 2 }}>
           {p.name}: <span style={{ fontWeight: 600 }}>
@@ -37,8 +37,8 @@ const Tip = ({ active, payload, label }) => {
 function Visual({ title, subtitle, children, controls }) {
   return (
     <div className="chart-panel flex-1 min-w-0 flex flex-col gap-2">
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#e6f1ff', textAlign: 'center' }}>{title}</p>
-      {subtitle && <p style={{ fontSize: 9.5, color: '#5a8bb0', textAlign: 'center' }}>{subtitle}</p>}
+      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{title}</p>
+      {subtitle && <p style={{ fontSize: 9.5, color: 'var(--text-faint)', textAlign: 'center' }}>{subtitle}</p>}
       {controls && <div style={{ display: 'flex', justifyContent: 'center' }}>{controls}</div>}
       {children}
     </div>
@@ -48,7 +48,7 @@ function Visual({ title, subtitle, children, controls }) {
 function PlanSelect({ value, onChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <label style={{ fontSize: 9, color: '#3d607a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Plan</label>
+      <label style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Plan</label>
       <select value={value} onChange={e => onChange(e.target.value)} className="select-dark">
         {PLANS.map(p => <option key={p}>{p}</option>)}
       </select>
@@ -65,7 +65,7 @@ function truncate(str, n) {
 
 function QueueTick({ x, y, payload }) {
   return (
-    <text x={x} y={y} dy={3} textAnchor="end" fontSize={9.5} fill="#cfe8fb">{truncate(payload.value, 24)}</text>
+    <text x={x} y={y} dy={3} textAnchor="end" fontSize={9.5} fill="var(--text-secondary)">{truncate(payload.value, 24)}</text>
   )
 }
 
@@ -104,7 +104,7 @@ function Visual2({ filters, selectedPlan, onPlanChange }) {
     if (!active || !payload?.length) return null
     return (
       <div className="chart-tooltip">
-        <p style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', marginBottom: 5 }}>{label}</p>
+        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 5 }}>{label}</p>
         {payload.map((p, i) => {
           const count = Math.round(p.value / 100 * totalQueues)
           return (
@@ -120,7 +120,7 @@ function Visual2({ filters, selectedPlan, onPlanChange }) {
     <Visual title="Forecast Variance Distribution" controls={<PlanSelect value={selectedPlan} onChange={onPlanChange} />}>
       <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
         {STACK_META.map(({ key, label }) => (
-          <span key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: '#7fa8cc' }}>
+          <span key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--text-dim)' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: STACK[key], display: 'inline-block' }} />
             {label}
           </span>
@@ -190,17 +190,17 @@ export default function Layer2ActualVsPlan({ filters }) {
   }, [filters.planName])
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#34d399',
             borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em',
           }}>02</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Actual vs Plan
           </span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— adherence tracking</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— adherence tracking</span>
         </div>
         <span style={{ fontSize: 11, color: '#34d399', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>

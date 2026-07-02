@@ -14,7 +14,7 @@ const ICONS = {
 
 function ClusterIcon({ name }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#3d78a3', flexShrink: 0 }}>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
       {ICONS[name]}
     </svg>
   )
@@ -63,8 +63,8 @@ export default function FilterPanel({ filters, onChange }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, #0c1929 0%, #0a1522 100%)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      background: 'linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-inset) 100%)',
+      borderBottom: '1px solid var(--border-subtle)',
       padding: '11px 18px 12px',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 10 }}>
@@ -81,7 +81,7 @@ export default function FilterPanel({ filters, onChange }) {
             {field('region')}
             {field('subRegion')}
             <div className="flex flex-col gap-1 min-w-0">
-              <label style={{ fontSize: 8.5, fontWeight: 600, color: '#4a6a85', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
+              <label style={{ fontSize: 8.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
                 DB / OSP
               </label>
               <div className="drill-toggle" style={{ width: 'fit-content' }}>
@@ -95,25 +95,25 @@ export default function FilterPanel({ filters, onChange }) {
       </div>
 
       {(activeFilters.length > 0 || filters.dbOsp !== 'DB') && (
-        <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize: 8.5, fontWeight: 600, color: '#3d607a', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
+        <div className="animate-fade-in" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 11, paddingTop: 9, borderTop: '1px solid var(--border-subtle)' }}>
+          <span style={{ fontSize: 8.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 2 }}>
             Scoped by
           </span>
           {activeFilters.map(k => (
             <span key={k} className="filter-chip">
-              <span style={{ color: '#5a8bb0' }}>{defs[k].label}:</span>{' '}
+              <span style={{ color: 'var(--text-faint)' }}>{defs[k].label}:</span>{' '}
               {filters[k].length === 1 ? filters[k][0] : `${filters[k].length} selected`}
               <button onClick={() => set(k)([])} aria-label={`Clear ${defs[k].label}`}>×</button>
             </span>
           ))}
           {filters.dbOsp !== 'DB' && (
             <span className="filter-chip">
-              <span style={{ color: '#5a8bb0' }}>DB / OSP:</span> {filters.dbOsp}
+              <span style={{ color: 'var(--text-faint)' }}>DB / OSP:</span> {filters.dbOsp}
               <button onClick={() => set('dbOsp')('DB')} aria-label="Reset DB / OSP">×</button>
             </span>
           )}
           <button onClick={clearAll} style={{
-            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 10, color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer',
             marginLeft: 4, textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
           }}>
             Clear all

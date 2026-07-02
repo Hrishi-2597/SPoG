@@ -36,17 +36,17 @@ export default function Layer3GeoMap({ filters }) {
   const subRegionIsNarrowed = filters.region?.length > 0 || filters.subRegion?.length > 0
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#fb923c',
             borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em',
           }}>03</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Geo Map
           </span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— global forecast adherence</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— global forecast adherence</span>
         </div>
         <span style={{ fontSize: 11, color: '#fb923c', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>
@@ -55,28 +55,28 @@ export default function Layer3GeoMap({ filters }) {
         <div style={{ padding: 14 }}>
           {/* Toggle, floated right so the title below can be centered on the panel */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 7, fontSize: 10, marginBottom: 2 }}>
-            <span style={{ color: viewMode === 'Sub-region' ? '#38bdf8' : '#3d607a', fontWeight: 500 }}>Sub-region</span>
+            <span style={{ color: viewMode === 'Sub-region' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 500 }}>Sub-region</span>
             <button onClick={() => setViewMode(v => v === 'Region' ? 'Sub-region' : 'Region')}
               style={{ position: 'relative', display: 'inline-flex', alignItems: 'center',
                 width: 36, height: 19, borderRadius: 10,
-                background: viewMode === 'Region' ? '#38bdf8' : '#1a3050',
+                background: viewMode === 'Region' ? 'var(--accent)' : 'var(--bg-inset)',
                 border: 'none', cursor: 'pointer', transition: 'background 0.2s', padding: 0 }}>
               <span style={{ position: 'absolute', top: 3, left: viewMode === 'Region' ? 19 : 3,
                 width: 13, height: 13, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
             </button>
-            <span style={{ color: viewMode === 'Region' ? '#38bdf8' : '#3d607a', fontWeight: 500 }}>Region</span>
+            <span style={{ color: viewMode === 'Region' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 500 }}>Region</span>
           </div>
 
           {/* Centered title */}
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#e6f1ff', textAlign: 'center' }}>Global Adherence Heatmap</p>
-          <p style={{ fontSize: 10, color: '#3d607a', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>Global Adherence Heatmap</p>
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
             Forecast adherence % · {viewMode} view
           </p>
 
           {/* Legend */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
             {LEGEND.map(({ label, color }) => (
-              <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#7fa8cc' }}>
+              <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--text-dim)' }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: color, display: 'inline-block',
                   boxShadow: `0 0 6px ${color}80` }} />
                 {label}
@@ -102,10 +102,10 @@ export default function Layer3GeoMap({ filters }) {
             {hovered && (
               <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
                 className="chart-tooltip">
-                <p style={{ fontWeight: 700, color: '#38bdf8', fontSize: 11 }}>{hovered.name}</p>
+                <p style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 11 }}>{hovered.name}</p>
                 <p style={{ marginTop: 3, fontSize: 13, fontWeight: 700, color: acColor(hovered.accuracy) }}>
                   {hovered.accuracy}%
-                  <span style={{ fontSize: 9, color: '#7fa8cc', fontWeight: 400, marginLeft: 5 }}>accuracy</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-dim)', fontWeight: 400, marginLeft: 5 }}>accuracy</span>
                 </p>
               </div>
             )}
@@ -174,10 +174,10 @@ export default function Layer3GeoMap({ filters }) {
           <div style={{ marginTop: 10, overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   {[viewMode, 'Accuracy', 'Status'].map((h, i) => (
                     <th key={h} style={{ textAlign: i === 0 ? 'left' : 'right', padding: '5px 10px 5px 0',
-                      fontSize: 9, color: '#3d607a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                      fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -187,10 +187,10 @@ export default function Layer3GeoMap({ filters }) {
                   const status = m.accuracy >= 90 ? 'Excellent' : m.accuracy >= 80 ? 'Good' : m.accuracy >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = m.accuracy >= 90 ? 'badge-good' : m.accuracy >= 80 ? 'badge-good' : m.accuracy >= 70 ? 'badge-warn' : 'badge-bad'
                   return (
-                    <tr key={m.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                    <tr key={m.label} style={{ borderBottom: '1px solid var(--border-subtle)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: '#e6f1ff', fontWeight: 500 }}>{m.label}</td>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{m.label}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{m.accuracy}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}>
                         <span className={`badge ${badgeCls}`}>{status}</span>

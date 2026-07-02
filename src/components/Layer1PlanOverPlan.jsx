@@ -9,14 +9,14 @@ const PLANS = PLAN_NAMES.filter(p => p !== 'Actual')
 // Blue/orange compare two neutral quantities (Plan A vs Plan B); violet is a neutral
 // analytical trend (the variance line isn't inherently good or bad on its own);
 // green/red are reserved for the diverging chart, where they mean ahead/behind.
-const C = { plan1: '#38bdf8', plan2: '#fb923c', variance: '#a78bfa', ahead: '#34d399', behind: '#f87171', grid: 'rgba(255,255,255,0.05)', tick: '#4a6a85' }
+const C = { plan1: '#38bdf8', plan2: '#fb923c', variance: '#a78bfa', ahead: '#34d399', behind: '#f87171', grid: 'var(--chart-grid)', tick: '#4a6a85' }
 
 function PlanDropdowns({ planA, planB, onChange }) {
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
       {[['planA', planA, 'A'], ['planB', planB, 'B']].map(([key, val, lbl]) => (
         <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <label style={{ fontSize: 9, color: '#3d607a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <label style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Plan {lbl}
           </label>
           <select value={val} onChange={e => onChange(key, e.target.value)} className="select-dark">
@@ -32,7 +32,7 @@ const Tip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div className="chart-tooltip">
-      <p style={{ fontSize: 10, fontWeight: 700, color: '#38bdf8', marginBottom: 5 }}>{label}</p>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginBottom: 5 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ fontSize: 11, color: p.color, marginBottom: 2 }}>
           {p.name}: <span style={{ fontWeight: 600 }}>{typeof p.value === 'number' && p.value > 99 ? p.value.toLocaleString() : `${p.value}%`}</span>
@@ -45,8 +45,8 @@ const Tip = ({ active, payload, label }) => {
 function Visual({ title, subtitle, children, controls }) {
   return (
     <div className="chart-panel flex-1 min-w-0 flex flex-col gap-2">
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#e6f1ff', textAlign: 'center' }}>{title}</p>
-      {subtitle && <p style={{ fontSize: 9.5, color: '#5a8bb0', textAlign: 'center' }}>{subtitle}</p>}
+      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{title}</p>
+      {subtitle && <p style={{ fontSize: 9.5, color: 'var(--text-faint)', textAlign: 'center' }}>{subtitle}</p>}
       {controls && <div style={{ display: 'flex', justifyContent: 'center' }}>{controls}</div>}
       {children}
     </div>
@@ -62,7 +62,7 @@ function truncate(str, n) {
 
 function QueueTick({ x, y, payload }) {
   return (
-    <text x={x} y={y} dy={3} textAnchor="end" fontSize={9.5} fill="#cfe8fb">{truncate(payload.value, 24)}</text>
+    <text x={x} y={y} dy={3} textAnchor="end" fontSize={9.5} fill="var(--text-secondary)">{truncate(payload.value, 24)}</text>
   )
 }
 
@@ -171,17 +171,17 @@ export default function Layer1PlanOverPlan({ filters }) {
   }, [filters.planName])
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
             fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#38bdf8',
             borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em',
           }}>01</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Plan over Plan
           </span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— variance analysis</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— variance analysis</span>
         </div>
         <span style={{ fontSize: 11, color: '#38bdf8', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>

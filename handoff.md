@@ -1,5 +1,14 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## Filter Bar Gap Fix + Light/Dark Theme Toggle (2026-07-02)
+
+- **Fixed a layout bug on HES Forecasting's filter bar**: the Time cluster (Fiscal Year/Quarter/Month/Week) left a visible empty gap before the People cluster (Business Partner/Global Grouping). Root cause: `HesFilterPanel.jsx`'s `Cluster` grid div was missing `flex-1 min-w-0` — the Forecasting page's `FilterPanel.jsx` already had this on its own `Cluster`, so its clusters correctly stretch to fill the row; HES's didn't, so its Time cluster's outer flex-grow allocation went unused as blank space instead of being consumed by the grid inside it. One-line fix.
+- **Added a light/dark theme toggle for both pages.** New sun/moon pill switch in the header (next to the ESG/HES page toggle), persisted to `localStorage`, applied via a `data-theme` attribute on `<html>`.
+  - New `src/index.css` CSS custom-property system: `:root` (dark, default) and `[data-theme='light']` define `--bg-page/panel/raised/inset`, `--border-subtle/default/strong`, `--text-primary/secondary/dim/faint/muted`, `--accent` (+`--accent-contrast` for text-on-accent), `--tooltip-bg`, `--chart-grid`, `--select-bg`, `--scrollbar-*`, `--shadow-card*`.
+  - Every shared CSS class (`.card-panel`, `.chart-panel`, `.layer-header`, `.select-dark`, `.ms-*`, `.filter-chip`, `.drill-toggle`/`.drill-btn`, `.chart-tooltip`, scrollbars) now reads these variables instead of hardcoded hex, so both pages re-skin from one place.
+  - Every component's inline "chrome" colors (backgrounds, borders, primary/secondary/muted text) were rerouted to `var(--...)` across `App.jsx`, `SectionDivider.jsx`, `FilterPanel.jsx`/`HesFilterPanel.jsx`, `MultiSelectField.jsx`, `MetricCards.jsx`/`HesMetricCards.jsx`, `Modal.jsx`, `RcaClcaPanel.jsx`/`HesRcaClcaPanel.jsx`, `HesChartKit.jsx`, and all 7 layer/geo-map files (`Layer1PlanOverPlan`, `Layer2ActualVsPlan`, `Layer3GeoMap`, `AsuLayer`, `SrLayer`, `AsuSrTrendLayer`, `HesGeoMap`).
+  - **Deliberately left static (same color in both themes):** chart series colors (accent/orange/violet/green/red role assignments), region color palettes, the geo accuracy color scale, status badges, and the geo map's own canvas (background/country fills/borders) — see `design_choice.md` for the reasoning per category.
+
 ## ESG Forecasting: Corrected Queue Roster (2026-07-02)
 
 - **`ACTIVE_QUEUE_NAMES` and `INACTIVE_QUEUE_NAMES` (`mockData.js`) were replaced wholesale** with a corrected, business-supplied roster: **47 active** (down from 199) and **146 inactive** (down from 406, including `'CCC MidRange Mandarin'` — moved here from the prior active list). Total Queues: 193 (was 605).
@@ -222,6 +231,7 @@ These are in the original SPOG_views.pptx but not yet implemented:
 6. `LOB_QUEUES`'s real per-queue lists for "High End Storage" now back the HES Forecasting Total Queues card (2026-07-02) — no longer the dead data flagged in the prior note here.
 7. HES Forecasting's CPASU Trend region/time drill-down (`cpasuTrendByRegion`) is fully synthetic — no real per-region/per-quarter/per-week ASU/SR dataset exists yet, same "illustrative structure" convention as the rest of this page's mock numbers.
 8. HES Forecasting's Total Queues card treats `LOB_QUEUES['High End Storage']`'s real names as the whole page's queue roster (not scoped to that one LOB) — it's the only real per-queue name data supplied for this page; if real per-LOB queue lists arrive for the other 32 LOBs, this should be revisited to decide whether Total Queues should sum across all of them instead.
+9. The light/dark theme toggle (2026-07-02) wasn't visually verified in a rendered browser — this session's environment has no browser-automation tool available. Verified instead by a clean production build, grepping the compiled CSS to confirm both `:root` and `[data-theme='light']` variable blocks made it through Tailwind/PostCSS untouched, and a full-codebase grep confirming no stray hardcoded "chrome" colors (background/border/primary-secondary-muted text) were left unconverted. Worth a manual toggle-and-look pass before treating this as fully verified.
 
 ---
 

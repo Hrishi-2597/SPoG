@@ -11,7 +11,7 @@ import { C, Tip, Modal } from './HesChartKit'
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
 // Same region palette as the Forecasting page's Total Queues donut (MetricCards.jsx)
 // — regions should look the same everywhere in the app, not just on this page.
-const REGION_COLORS = { APJ: '#38bdf8', EMEA: '#fb923c', Global: '#a78bfa', LATAM: '#22d3ee', NAMER: '#fbbf24' }
+const REGION_COLORS = { APJ: 'var(--accent)', EMEA: '#fb923c', Global: '#a78bfa', LATAM: '#22d3ee', NAMER: '#fbbf24' }
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -33,23 +33,23 @@ function StatusPip({ ok }) {
 function Card({ icon, label, sublabel, value, sub, trend, onClick, active }) {
   return (
     <button onClick={onClick} className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`} style={{ cursor: 'pointer', padding: 0, minHeight: 84 }}>
-      <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#e6f1ff', lineHeight: 1.2 }}>{label}</p>
-          {sublabel && <p style={{ fontSize: 9, color: '#3d607a', marginTop: 1 }}>{sublabel}</p>}
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{label}</p>
+          {sublabel && <p style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 1 }}>{sublabel}</p>}
         </div>
       </div>
       <div style={{ padding: '8px 12px 10px', flex: 1 }}>
-        <p className="num" style={{ fontSize: 20, fontWeight: 700, color: '#e6f1ff', lineHeight: 1, letterSpacing: '-0.02em' }}>{value}</p>
+        <p className="num" style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>{value}</p>
         {sub && (
-          <p style={{ fontSize: 10, color: '#7fa8cc', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <p style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
             {trend !== undefined && <StatusPip ok={trend} />}
             {sub}
           </p>
         )}
       </div>
-      {active && <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)', marginTop: 'auto' }} />}
+      {active && <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', marginTop: 'auto' }} />}
     </button>
   )
 }
@@ -150,7 +150,7 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
 
   return (
     <div style={{ ...CHART_BOX, position: 'relative' }}>
-      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 6, textAlign: 'center' }}>Click a slice to see that region's queues</p>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 6, textAlign: 'center' }}>Click a slice to see that region's queues</p>
       <ResponsiveContainer width="100%" height={230}>
         <PieChart>
           <Tooltip content={({ active, payload }) => {
@@ -158,8 +158,8 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
             const { region, count } = payload[0].payload
             return (
               <div className="chart-tooltip">
-                <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || '#38bdf8', marginBottom: 3 }}>{region}</p>
-                <p style={{ fontSize: 11, color: '#cfe8fb' }}>{count} queues <span style={{ color: '#5a8bb0' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || 'var(--accent)', marginBottom: 3 }}>{region}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{count} queues <span style={{ color: 'var(--text-faint)' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
               </div>
             )
           }} />
@@ -171,7 +171,7 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
             onClick={d => onSelectRegion(d.region)} style={{ cursor: 'pointer' }}>
             {data.map((d, i) => (
               <Cell key={i} fill={REGION_COLORS[d.region] || C.tick}
-                stroke="#0c1929" strokeWidth={2}
+                stroke="var(--bg-panel)" strokeWidth={2}
                 opacity={selectedRegion == null || selectedRegion === d.region ? 0.92 : 0.25} />
             ))}
           </Pie>
@@ -181,8 +181,8 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
         position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)',
         textAlign: 'center', pointerEvents: 'none',
       }}>
-        <p className="num" style={{ fontSize: 19, fontWeight: 700, color: '#e6f1ff', lineHeight: 1 }}>{centerCount}</p>
-        <p style={{ fontSize: 9, color: '#5a8bb0', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
+        <p className="num" style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{centerCount}</p>
+        <p style={{ fontSize: 9, color: 'var(--text-faint)', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
       </div>
     </div>
   )
@@ -193,18 +193,18 @@ function QueueTable({ rows }) {
     <div style={{ overflowX: 'auto', maxHeight: 220, overflowY: 'auto' }}>
       <table className="w-full" style={{ fontSize: 11, borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
-            <th style={{ textAlign: 'right', padding: '4px 0', color: '#3d607a', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Region</th>
+          <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
+            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
+            <th style={{ textAlign: 'right', padding: '4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Region</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((q, i) => (
-            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+            <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.05)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <td style={{ padding: '5px 12px 5px 0', fontFamily: 'monospace', fontSize: 10, color: '#7fa8cc' }}>{q.name}</td>
-              <td style={{ padding: '5px 0', textAlign: 'right', color: '#3d607a' }}>{q.region}</td>
+              <td style={{ padding: '5px 12px 5px 0', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-dim)' }}>{q.name}</td>
+              <td style={{ padding: '5px 0', textAlign: 'right', color: 'var(--text-muted)' }}>{q.region}</td>
             </tr>
           ))}
         </tbody>
@@ -221,12 +221,12 @@ function TotalQueuesSection() {
       <QueuesByRegionChart rows={HES_ACTIVE_QUEUES} selectedRegion={selectedRegion}
         onSelectRegion={r => setSelectedRegion(prev => prev === r ? null : r)} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 6px' }}>
-        <p style={{ fontSize: 10, color: '#5a8bb0' }}>
-          {selectedRegion ? <><span style={{ color: '#38bdf8', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
+        <p style={{ fontSize: 10, color: 'var(--text-faint)' }}>
+          {selectedRegion ? <><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
         </p>
         {selectedRegion && (
           <button onClick={() => setSelectedRegion(null)} style={{
-            fontSize: 10, color: '#7fa8cc', background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 10, color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer',
             textDecoration: 'underline', textDecorationColor: 'rgba(127,168,204,0.3)',
           }}>Clear</button>
         )}

@@ -36,7 +36,7 @@ export default function MultiSelectField({ label, options, value, onChange, mono
 
   return (
     <div ref={rootRef} className="flex flex-col gap-1 min-w-0" style={{ position: 'relative' }}>
-      <label style={{ fontSize: 8.5, fontWeight: 600, color: '#4a6a85', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
+      <label style={{ fontSize: 8.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', paddingLeft: 1 }}>
         {label}
       </label>
       <button
@@ -47,7 +47,7 @@ export default function MultiSelectField({ label, options, value, onChange, mono
       >
         <span className="ms-field-label" title={selected.length > 1 ? selected.join(', ') : undefined}>{display}</span>
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, opacity: open ? 1 : 0.7, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-          <polyline points="6 9 12 15 18 9" stroke="#5a8bb0" strokeWidth="2.5" />
+          <polyline points="6 9 12 15 18 9" stroke="var(--text-faint)" strokeWidth="2.5" />
         </svg>
       </button>
 
@@ -68,7 +68,7 @@ export default function MultiSelectField({ label, options, value, onChange, mono
             {filtered.length === 0 && <p className="ms-empty">No matches</p>}
             {filtered.map(opt => (
               <label key={opt} className="ms-option" style={mono ? { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' } : undefined}>
-                <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} style={{ accentColor: '#38bdf8' }} />
+                <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} style={{ accentColor: 'var(--accent)' }} />
                 <span>{opt}</span>
               </label>
             ))}

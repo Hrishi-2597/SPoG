@@ -25,12 +25,12 @@ function Section({ badge, badgeColor, title, subtitle, items }) {
           fontSize: 9, fontWeight: 700, color: '#070f1a', background: badgeColor,
           borderRadius: 4, padding: '2px 6px', letterSpacing: '0.03em',
         }}>{badge}</span>
-        <p style={{ fontSize: 11.5, fontWeight: 700, color: '#e6f1ff' }}>{title}</p>
+        <p style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</p>
       </div>
-      <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 9 }}>{subtitle}</p>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 9 }}>{subtitle}</p>
       <ul style={{ display: 'flex', flexDirection: 'column', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
         {items.map((text, i) => (
-          <li key={i} style={{ display: 'flex', gap: 7, fontSize: 11, lineHeight: 1.45, color: '#cfe8fb' }}>
+          <li key={i} style={{ display: 'flex', gap: 7, fontSize: 11, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
             <span style={{ flexShrink: 0, width: 5, height: 5, borderRadius: '50%', background: badgeColor, marginTop: 5 }} />
             {text}
           </li>
@@ -43,7 +43,7 @@ function Section({ badge, badgeColor, title, subtitle, items }) {
 export default function RcaClcaPanel() {
   return (
     <div className="flex flex-col gap-3">
-      <p style={{ fontSize: 10, fontWeight: 700, color: '#3d78a3', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>
         RCA &amp; CLCA
       </p>
       <Section

@@ -181,3 +181,20 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Sanity-checked `inferRegion()` against the new active names — reasonable region spread (EMEA/Global/APJ/LATAM), no crashes, no `NAMER` entries this time (handled fine by existing empty-region UI states)
 - Ran `npm run build` (clean)
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md` — corrected every stale `199`/`406`/`605` count reference, generalized two prose references to the ratio formula that had named the old `199` divisor explicitly so they won't go stale again; committed and pushed to `main`
+
+---
+
+## Prompt 13 — 2026-07-02
+**Input:** Screenshot of the HES Forecasting filter bar showing a visible gap between Fiscal Week and Business Partner, with instructions to fill it and to add a light/dark mode toggle for both pages
+
+**Action:**
+- Root-caused the gap: `HesFilterPanel.jsx`'s `Cluster` grid div was missing `flex-1 min-w-0` (the Forecasting page's `FilterPanel.jsx` `Cluster` already had it), so the Time cluster's flex-grown width went unclaimed as blank space instead of stretching its 4 dropdown columns. One-line fix.
+- Built a full light/dark theme toggle:
+  - New CSS custom-property system in `index.css` (`:root` dark defaults, `[data-theme='light']` overrides) covering background depth levels, border tiers, text hierarchy, accent + accent-contrast, tooltip/chart-grid/select tokens, scrollbars, and card shadows
+  - Rerouted every shared CSS class (`.card-panel`, `.chart-panel`, `.layer-header`, `.select-dark`, `.ms-*`, `.filter-chip`, `.drill-toggle`/`.drill-btn`, `.chart-tooltip`, scrollbars) to the new variables
+  - Added a sun/moon `ThemeToggle` in `App.jsx`'s header, state persisted to `localStorage`, applied via a `data-theme` attribute set in the `useState` initializer to avoid a flash on load
+  - Rerouted inline "chrome" colors (backgrounds/borders/text) across `App.jsx`, `SectionDivider.jsx`, `FilterPanel.jsx`/`HesFilterPanel.jsx`, `MultiSelectField.jsx`, `MetricCards.jsx`/`HesMetricCards.jsx`, `Modal.jsx`, `RcaClcaPanel.jsx`/`HesRcaClcaPanel.jsx`, `HesChartKit.jsx`, and all 7 layer/geo-map files
+  - Deliberately left chart series/data colors, region palettes, the geo accuracy scale, status badges, and the geo maps' own canvases un-themed (constant across both modes) — see `design_choice.md`
+- Ran `npm run build` (clean), grepped the compiled CSS to confirm both `:root` and `[data-theme='light']` blocks survived Tailwind/PostCSS, and grepped the whole component tree to confirm no stray hardcoded chrome colors were left unconverted
+- This session's environment has no browser-automation tool, so the toggle wasn't visually clicked through in a rendered browser — flagged to the user as a follow-up to verify manually
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`

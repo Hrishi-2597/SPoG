@@ -87,13 +87,13 @@ function Visual3({ filters, planA, planB, onPlanChange }) {
 
       {selectedRegion && (
         <div className="animate-fade-in" style={{ marginTop: 4 }}>
-          <p style={{ fontSize: 9.5, color: '#5a8bb0', marginBottom: 4, textAlign: 'center' }}>
+          <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 4, textAlign: 'center' }}>
             <span style={{ color: '#38bdf8', fontWeight: 600 }}>{selectedRegion}</span> — LOB contribution to the gap
           </p>
           <div style={{ maxHeight: 130, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
             {lobImpact.map((l, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, padding: '2px 4px' }}>
-                <span style={{ color: '#cfe8fb' }}>{l.lob}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{l.lob}</span>
                 <span style={{ fontWeight: 600, color: l.delta >= 0 ? C.ahead : C.behind }}>
                   {l.delta > 0 ? '+' : ''}{l.delta}
                 </span>
@@ -113,12 +113,12 @@ export default function AsuLayer({ filters }) {
   const handlePlanChange = (key, val) => setPlans(p => ({ ...p, [key]: val }))
 
   return (
-    <div style={{ background: '#0c1929', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
       <div className="layer-header" onClick={() => setOpen(o => !o)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#070f1a', background: '#38bdf8', borderRadius: 4, padding: '2px 7px', letterSpacing: '0.04em' }}>01</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e6f1ff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ASU Trend</span>
-          <span style={{ fontSize: 10, color: '#3d607a' }}>— average service unit tracking</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ASU Trend</span>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>— average service unit tracking</span>
         </div>
         <span style={{ fontSize: 11, color: '#38bdf8', transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
       </div>
