@@ -62,6 +62,7 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 **Decision:** Clicking a KPI card opens a panel directly below the cards row, not a modal overlay.
 **Why:** Modals interrupt workflow. An inline panel lets the user see both the card value and the detail table simultaneously without losing context of other cards.
 **One deliberate exception (2026-07-01):** Clicking a year's bar inside the CQN Variance drill-down opens an actual modal (backdrop + centered card) listing that year's example queues. This is a second level of drill nested inside the first — by the time you're two levels deep, "context of the other cards" isn't the thing you're trying to preserve; a floating overlay reads more clearly than squeezing another chart into an already-open panel.
+**Superseded (2026-07-02):** Requested directly for both pages — card drill-downs now open in the shared `Modal` (`src/components/Modal.jsx`), same as HES Forecasting. See "Card drill-downs: modal popups on the Forecasting page too" below. The CQN Variance year-click modal is unaffected (still its own nested overlay), it's just nested one level deeper now (a modal inside a modal) instead of a modal inside an inline panel.
 
 ### Drill toggle (FY / Quarter / Week) as segmented control (removed 2026-07-01)
 **Decision:** Three-button segmented control per visual instead of a dropdown.
@@ -342,6 +343,18 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 ### UCR Runrate with Target: fixed at fiscal-year granularity, top-5-LOB modal replaces the queue list
 **Decision:** The chart now always plots `UCR_BY_FY` directly (all 3 fiscal years), ignoring Quarter/Week filter narrowing. The previously always-visible "queues not adhering to target" list is gone; clicking a year's bar opens a modal listing that year's top 5 non-adherent **LOBs** (not queues), via new selector `topNonAdherentLobsByYear()`.
 **Why:** Requested directly ("keep it at fiscal year default", "top 5 LOB's not adhering... give a pop-up (design on your convenience)"). Modal-on-bar-click for a "top N" list directly mirrors the CQN Variance year-click modal already established on the Forecasting page — reusing a proven pattern rather than inventing a new one from scratch. Switching from queues to LOBs left `LOB_QUEUES`'s real per-queue data (High End Storage) without a UI consumer for now — see `handoff.md` and `tech_spec.md`'s Known Limitations.
+
+---
+
+## Card Drill-Downs: Modal Popups on the Forecasting Page Too (2026-07-02)
+
+### Shared `Modal` component, extracted to `src/components/Modal.jsx`
+**Decision:** The `Modal` popup originally built for HES Forecasting's cards (`src/components/hes/HesChartKit.jsx`) moved to a top-level `src/components/Modal.jsx`; `HesChartKit.jsx` now re-exports it (`export { Modal } from '../Modal'`) so every existing HES import keeps working unchanged. `MetricCards.jsx` imports it directly.
+**Why:** The request was to give the Forecasting page's cards the exact same modal behavior HES Forecasting already has — reusing the one implementation both pages now need is more honest than copy-pasting the same ~30 lines of overlay markup into a second file, and guarantees the two pages' modals stay visually identical as either evolves.
+
+### Forecasting page's card drill-downs: inline panel → modal
+**Decision:** `MetricCards.jsx`'s `DrillDownPanel` (rendered inline below the cards row) became `DrillDownModal`, wrapped in the shared `Modal`. The nested `YearQueueModal` (CQN Variance's year-click drill) is unchanged — it's now a modal nested inside a modal instead of a modal nested inside an inline panel, but its own implementation and behavior didn't need to change.
+**Why:** Requested directly, explicitly extended to "do this for ESG Forecasting as well" after HES Forecasting got the same treatment. This supersedes the page's original "Drill-down as inline panel (not modal)" decision (see above) — closing the modal only clears `MetricCards`' local `active` state, so `filters` (owned by `ForecastingPage`) is never touched, meaning the dashboard is exactly as filtered when the modal closes, matching the "without losing current filter selections" requirement.
 
 ---
 

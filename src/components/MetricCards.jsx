@@ -7,6 +7,7 @@ import {
   cardData, filterQueues, callVolumeByFY, dbOspVolumeByFY, forecastAccuracyByRegion,
   CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY,
 } from '../data/mockData'
+import { Modal } from './Modal'
 
 // pct: violet for the "% trend line" role — matches the app-wide convention that
 // neutral analytical lines get violet, since green/handled already means something else here.
@@ -338,28 +339,21 @@ function YearQueueModal({ fy, filters, onClose }) {
   )
 }
 
-function DrillDownPanel({ type, filters, rows, onClose }) {
+const MODAL_TITLES = {
+  queues:   'Active Queue Directory',
+  volume:   'Offered vs Handled — Fiscal Year',
+  dbOsp:    'DB vs OSP Offered Volume',
+  forecast: 'Regional Forecast Accuracy',
+  variance: 'Year-over-Year Forecast Variance',
+}
+
+// Opening/closing a card's popup only touches this component's own `active`
+// state — `filters` keeps flowing from ForecastingPage unchanged, so closing
+// the modal always returns to the dashboard exactly as filtered.
+function DrillDownModal({ type, filters, rows, onClose }) {
   const [selectedYear, setSelectedYear] = useState(null)
   return (
-    <div className="animate-fade-in" style={{
-      marginTop: 10,
-      background: 'rgba(12,25,41,0.95)',
-      border: '1px solid rgba(56,189,248,0.2)',
-      borderRadius: 8,
-      padding: '12px 14px',
-      backdropFilter: 'blur(8px)',
-    }}>
-      <div style={{ position: 'relative', marginBottom: 10 }}>
-        <h3 style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', textAlign: 'center' }}>
-          {type === 'queues'   && 'Active Queue Directory'}
-          {type === 'volume'   && 'Offered vs Handled — Fiscal Year'}
-          {type === 'dbOsp'    && 'DB vs OSP Offered Volume'}
-          {type === 'forecast' && 'Regional Forecast Accuracy'}
-          {type === 'variance' && 'Year-over-Year Forecast Variance'}
-        </h3>
-        <button onClick={onClose} style={{ position: 'absolute', right: 0, top: -1, color: '#3d607a', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-      </div>
-
+    <Modal title={MODAL_TITLES[type]} onClose={onClose}>
       {type === 'queues' && <QueuesSection rows={rows} />}
       {type === 'volume' && <VolumeByFYChart filters={filters} />}
       {type === 'dbOsp' && <DbOspByFYChart filters={filters} />}
@@ -367,7 +361,7 @@ function DrillDownPanel({ type, filters, rows, onClose }) {
       {type === 'variance' && <VarianceByFYChart filters={filters} onSelectYear={setSelectedYear} />}
 
       {selectedYear && <YearQueueModal fy={selectedYear} filters={filters} onClose={() => setSelectedYear(null)} />}
-    </div>
+    </Modal>
   )
 }
 
@@ -416,7 +410,7 @@ export default function MetricCards({ filters }) {
         />
       </div>
 
-      {active && <DrillDownPanel type={active} filters={filters} rows={structuralRows} onClose={() => setActive(null)} />}
+      {active && <DrillDownModal type={active} filters={filters} rows={structuralRows} onClose={() => setActive(null)} />}
     </div>
   )
 }

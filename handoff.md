@@ -1,5 +1,11 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## Forecasting Page: Card Drill-Downs Are Now Modals Too (2026-07-02)
+
+- **`MetricCards.jsx`'s 5 card drill-downs (Total Queues, Call Volume, DB/OSP Split, Forecast Accuracy, CQN Variance) now open in a popup modal**, matching the behavior already shipped for HES Forecasting's cards. Closing the modal only clears local `active` state — `filters` (owned by `ForecastingPage`) is untouched, so the dashboard is exactly as filtered when it closes.
+- **`Modal` extracted to a shared `src/components/Modal.jsx`**, used by both pages. `src/components/hes/HesChartKit.jsx` now re-exports it (`export { Modal } from '../Modal'`) instead of defining its own copy — no HES import needed to change.
+- The nested **CQN Variance year-click modal (`YearQueueModal`)** is unchanged in implementation — it's now a modal nested inside a modal instead of nested inside an inline panel, which needed no code changes to keep working.
+
 ## HES Forecasting: Total Queues Card + RCA/CLCA Sidebar (2026-07-02)
 
 - **Total Queues card added at the front of the Key Metrics row**, mirroring the Forecasting page's card exactly (icon, "Active / Inactive" sublabel, `71 / 221` value format, "150 inactive queues" sub-line). **UCR Impacted SR (the last card) was removed** to make room — the row is back to 5 cards: Total Queues, Active Service Units, Service Requests, CPASU, Current UCR.

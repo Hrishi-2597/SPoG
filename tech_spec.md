@@ -35,19 +35,22 @@ SPoG/
 │   ├── components/
 │   │   ├── ForecastingPage.jsx # ESG Forecasting page body (filters + cards + 3 layers + RCA/CLCA sidebar)
 │   │   ├── SectionDivider.jsx  # Shared "KEY METRICS" / "ANALYSIS LAYERS" section label, used by both pages
+│   │   ├── Modal.jsx           # Shared popup modal — used by both pages' Key Metrics card drill-downs
 │   │   ├── FilterPanel.jsx     # 12 filters in 4 icon-labeled clusters (Scope/Time/People/Geography) + applied-filter chips
-│   │   ├── MetricCards.jsx     # 5 KPI cards + drill-down panel
+│   │   ├── MetricCards.jsx     # 5 KPI cards, each opening its drill-down in Modal
 │   │   ├── Layer1PlanOverPlan.jsx  # Plan vs Plan: 3 chart visuals + plan selectors
 │   │   ├── Layer2ActualVsPlan.jsx  # Actual vs Plan: 3 chart visuals + stacked bar
 │   │   ├── Layer3GeoMap.jsx    # World map with accuracy markers + summary table
 │   │   └── hes/                # HES Forecasting page (all new, 2026-07-02; named "capacity/" until the same-day rename)
-│   │       ├── HesForecastingPage.jsx  # Page body: filters + cards + 4 layers (no RCA/CLCA sidebar)
+│   │       ├── HesForecastingPage.jsx  # Page body: filters + cards + 4 layers + RCA/CLCA sidebar
 │   │       ├── HesFilterPanel.jsx      # 7 filters: LOB / FY-Qtr-Month-Week / Business Partner-Global Grouping
-│   │       ├── HesChartKit.jsx         # Shared chart primitives (Visual wrapper, Tip, PlanDropdowns, truncate, etc.)
-│   │       ├── HesMetricCards.jsx      # 5 KPI cards + drill-down panel (ASU/SR/CPASU/UCR/UCR-Impacted-SR)
-│   │       ├── AsuLayer.jsx            # Layer 01 — Actual vs Plan, Plan-on-Plan, Plan Impact Analysis (region→LOB drill)
-│   │       ├── SrLayer.jsx             # Layer 02 — same structure as AsuLayer, SR metric
-│   │       ├── AsuSrTrendLayer.jsx     # Layer 03 — ASU/SR+CPASU trend (Region/Country), UCR Impact, UCR Runrate+non-adherent queues
+│   │       ├── HesChartKit.jsx         # Shared chart primitives (Visual wrapper, Tip, PlanDropdowns, truncate, etc.);
+│   │       │                            re-exports Modal from ../Modal.jsx
+│   │       ├── HesMetricCards.jsx      # 5 KPI cards, each opening its drill-down in Modal (Total Queues/ASU/SR/CPASU/UCR)
+│   │       ├── HesRcaClcaPanel.jsx     # Sticky RCA/CLCA sidebar, HES-specific illustrative content
+│   │       ├── AsuLayer.jsx            # Layer 01 "ASU Trend" — Actuals vs Plan, Plan vs Plan, Plan Impact (region→LOB drill)
+│   │       ├── SrLayer.jsx             # Layer 02 "SR Trend" — same structure as AsuLayer, SR metric
+│   │       ├── AsuSrTrendLayer.jsx     # Layer 03 "ASU/UCR Impact on SR Analysis" — CPASU Trend, UCR Impact on SR, UCR Runrate+top-5-LOB modal
 │   │       └── HesGeoMap.jsx           # Layer 04 — choropleth by LOB adherence per region
 │   └── data/
 │       ├── mockData.js         # ESG Forecasting page's static mock data (CQNs, plans, KPIs, geo) — also exports matchesMulti, REGIONS,
@@ -70,7 +73,8 @@ App
 ├── <header>              — Page title, org label, live indicator
 ├── FilterPanel           — Controlled: filters state lifted to App; renders applied-filter chips
 ├── MetricCards(filters)  — cardData(filters) + filterQueues(filters) recomputed on every change
-│   └── DrillDownPanel    — Inline (within MetricCards), toggled by card click; rows scoped to match the clicked card
+│   └── DrillDownModal    — Popup (shared Modal component), toggled by card click; rows scoped to match the
+│                            clicked card; closing it only clears local `active` state, filters untouched
 ├── Layer1PlanOverPlan(filters) — Collapsible section, always at Fiscal Year granularity
 │   ├── Visual1           — ComposedChart: planOverPlanByFY(filters), plan A/B dropdowns
 │   ├── Visual2           — ComposedChart: planOverPlanByRegion(filters), Region x-axis
@@ -129,7 +133,7 @@ No external state library. All state is local React `useState`:
 |---|---|---|
 | `App` | `page` ('forecasting'\|'hes') | String |
 | `ForecastingPage` | `filters` | Object (12 filter keys) |
-| `MetricCards` | `active` (drill-down) | String or null |
+| `MetricCards` | `active` (which card's modal is open) | String or null |
 | `Layer1PlanOverPlan` | `plans` (planA/planB, reset by `filters.planName` via `useEffect`), `open` | Object, Boolean |
 | `Layer2ActualVsPlan` | `plan` (reset by `filters.planName` via `useEffect`), `open` | String, Boolean |
 | `Layer3GeoMap` | `viewMode` (Region/Country), `hovered`, `open` | String, Object, Boolean |

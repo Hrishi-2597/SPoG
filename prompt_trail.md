@@ -155,3 +155,15 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Created `HesRcaClcaPanel.jsx` with HES-specific illustrative RCA/CLCA content (ASU/SR/CPASU/UCR-themed, not a copy of the Forecasting page's queue/call-volume-themed copy) and wired it into `HesForecastingPage.jsx` as a sticky sidebar alongside Layers 1-4, matching `ForecastingPage.jsx`'s exact layout
 - Ran `npm run build` (clean) and grepped for stale references to the removed card/selector — none found
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
+## Prompt 11 — 2026-07-02
+**Input:** `When a user clicks on any card, display the detailed view as a popup modal instead of navigating to a new page. The popup should allow users to close it and return to the dashboard without losing their current filter selections - do this for ESG Forecasting as well`
+
+**Action:**
+- Extracted the `Modal` component (built for HES Forecasting's cards) out of `HesChartKit.jsx` into a shared `src/components/Modal.jsx`; `HesChartKit.jsx` now re-exports it so no existing HES import needed to change
+- `MetricCards.jsx` (ESG Forecasting): renamed `DrillDownPanel` → `DrillDownModal`, wrapped in the shared `Modal`; the nested `YearQueueModal` (CQN Variance year-click drill) needed no changes — it's now a modal nested inside a modal instead of nested inside an inline panel
+- This supersedes the Forecasting page's original "Drill-down as inline panel (not modal)" decision, noted in `design_choice.md`
+- Ran `npm run build` (clean) and grepped for stale `DrillDownPanel` references — none found
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the change; committed and pushed to `main`
