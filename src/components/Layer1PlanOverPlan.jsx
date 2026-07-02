@@ -129,8 +129,7 @@ function Visual3({ filters, planA, planB, onPlanChange }) {
   const domainMax = niceMax * 1.3
   const ticks = [-niceMax, -niceMax / 2, 0, niceMax / 2, niceMax]
   return (
-    <Visual title="Top Queue Variance — Plan A vs Plan B"
-      subtitle={<>Green = ahead of {planA} · Red = behind</>}
+    <Visual title="Top Queues by Variance"
       controls={<PlanDropdowns planA={planA} planB={planB} onChange={onPlanChange} />}>
       <ResponsiveContainer width="100%" height={230}>
         <ComposedChart data={data} layout="vertical" margin={{ top: 4, right: 34, left: 0, bottom: 0 }}>

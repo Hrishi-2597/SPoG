@@ -158,7 +158,7 @@ function Visual3({ filters }) {
   const domainMax = niceMax * 1.3
   const ticks = [-niceMax, -niceMax / 2, 0, niceMax / 2, niceMax]
   return (
-    <Visual title="Top Queue Variance — Actual vs Plan" subtitle="Green = ahead of plan · Red = behind">
+    <Visual title="Top Queues by Variance">
       <ResponsiveContainer width="100%" height={230}>
         <ComposedChart data={sorted} layout="vertical" margin={{ top: 4, right: 34, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} horizontal={false} />
