@@ -352,12 +352,14 @@ export function cpasuByRegion(filters = {}) {
   })
 }
 
-// Now driven by the global granularity toggle (defaults to 'Quarter' if none is
-// passed) instead of inferring granularity from which time filter happened to be
-// selected — the toggle is the one control meant to answer "what granularity" for
-// every time-axis chart on the page, this one included.
-export function regionTrendGranularity(filters = {}, granularity = 'Quarter') {
+// Now driven by the global granularity toggle instead of inferring granularity from
+// which time filter happened to be selected — the toggle is the one control meant to
+// answer "what granularity" for every time-axis chart on the page, this one included.
+// A falsy/'Year' value (the toggle's default, nothing selected) means plain fiscal
+// years, same as every other chart's untouched default — not "fall back to Quarter."
+export function regionTrendGranularity(filters = {}, granularity) {
   const years = hesEffectiveFiscalYears(filters)
+  if (!granularity || granularity === 'Year') return { granularity: 'Year', periods: years }
   return { granularity, periods: periodsForGranularity(granularity, years) }
 }
 

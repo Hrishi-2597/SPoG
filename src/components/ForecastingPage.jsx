@@ -28,9 +28,10 @@ export default function ForecastingPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   // Page-wide "view by" granularity — Quarter/Month/Week — separate from the value
   // filters above: it changes what axis every time-series chart renders at, not
-  // which rows are in scope. See design_choice.md for why it isn't one of the
-  // MultiSelectField filters.
-  const [granularity, setGranularity] = useState('Quarter')
+  // which rows are in scope. Defaults to null (= Fiscal Year, every chart's original
+  // behavior) — nothing is pre-selected, same as the value filters above defaulting
+  // to "All". See design_choice.md for why it isn't one of the MultiSelectField filters.
+  const [granularity, setGranularity] = useState(null)
 
   return (
     <>

@@ -216,3 +216,16 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Renamed AsuLayer's subtitle from "— average service unit tracking" to "— Active Service Unit tracking"
 - Verified with `npm run build` (clean) plus a throwaway Node script exercising every changed selector at Quarter/Month/Week directly (not just via the build) — confirmed correct period counts (12/36/156), additive fields summing back close to their FY totals, rate fields staying in range instead of being divided down, and the generalized LOB-modal function handling non-year period labels
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
+## Prompt 15 — 2026-07-02
+**Input:** Screenshot showing "PoP Variation" rendering 12 quarterly bars by default; feedback that the granularity feature itself is correct but every view should default to Fiscal Year (as before) with nothing pre-selected in the Quarter/Month/Week toggle, for both pages
+
+**Action:**
+- Changed `granularity` state default from `'Quarter'` to `null` in `ForecastingPage.jsx`/`HesForecastingPage.jsx` — `null` means Fiscal Year, matching the convention every value filter already uses (`[]` = "All", not a pre-picked option)
+- Changed `GranularityToggle.jsx` so clicking the already-active pill deselects it back to `null`, instead of always keeping exactly one of Quarter/Month/Week active (that all-times-one-active behavior stays correct for the separate DB/OSP pill, which is a genuine 3-way exclusive choice)
+- Fixed a latent bug this surfaced: `regionTrendGranularity()`'s `= 'Quarter'` default parameter only applies when the argument is omitted, not when it's explicitly `null` — since the real caller now always passes the toggle's actual value (including `null`), the default silently never fired and `null` fell through to the Quarter branch of `periodsForGranularity()` anyway. Fixed with an explicit falsy/`'Year'` check that returns plain fiscal years, matching every other granularity-aware selector
+- Re-verified with the same throwaway-Node-script approach as before: confirmed `planOverPlanByFY`, `actualVsPlanByFY`, `asuByFY`, `ucrByFY` all return plain `['FY25','FY26','FY27']` both when `granularity` is omitted and when explicitly `null`, and `regionTrendGranularity(filters, null)` now correctly returns `{granularity: 'Year', periods: ['FY25','FY26','FY27']}`
+- Ran `npm run build` (clean)
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md`; committed and pushed to `main`

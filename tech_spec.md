@@ -159,7 +159,8 @@ reference a page-level CSS variable) — it uses a fixed neutral slate that read
 ## Global Time-Granularity Toggle (2026-07-02)
 
 `GranularityToggle.jsx` (shared) renders a Quarter/Month/Week pill inside both filter bars. The value lives
-in `ForecastingPage`/`HesForecastingPage` state (`granularity`, default `'Quarter'`) alongside `filters`,
+in `ForecastingPage`/`HesForecastingPage` state (`granularity`, default `null` — no selection, meaning Fiscal
+Year, same convention as every value filter defaulting to "All") alongside `filters`,
 and flows down as a plain prop to every chart-rendering component — no context, no separate store, same
 pattern as `filters` itself.
 
@@ -207,12 +208,12 @@ No external state library. All state is local React `useState`:
 | Component | State | Type |
 |---|---|---|
 | `App` | `page` ('forecasting'\|'hes'); `theme` ('dark'\|'light', persisted to localStorage) | String, String |
-| `ForecastingPage` | `filters`; `granularity` ('Quarter'\|'Month'\|'Week', default 'Quarter') | Object (12 filter keys), String |
+| `ForecastingPage` | `filters`; `granularity` (null\|'Quarter'\|'Month'\|'Week', default null = Fiscal Year) | Object (12 filter keys), String or null |
 | `MetricCards` | `active` (which card's modal is open) | String or null |
 | `Layer1PlanOverPlan` | `plans` (planA/planB, reset by `filters.planName` via `useEffect`), `open` | Object, Boolean |
 | `Layer2ActualVsPlan` | `plan` (reset by `filters.planName` via `useEffect`), `open` | String, Boolean |
 | `Layer3GeoMap` | `viewMode` (Region/Country), `hovered`, `open` | String, Object, Boolean |
-| `HesForecastingPage` | `filters`; `granularity` ('Quarter'\|'Month'\|'Week', default 'Quarter') | Object (7 filter keys), String |
+| `HesForecastingPage` | `filters`; `granularity` (null\|'Quarter'\|'Month'\|'Week', default null = Fiscal Year) | Object (7 filter keys), String or null |
 | `HesMetricCards` | `active` (which card's modal is open); `TotalQueuesSection`'s `selectedRegion` (donut drill) | String or null, String or null |
 | `AsuLayer` / `SrLayer` | `plan`, `plans` (planA/planB), `open`, `selectedRegion` (Visual3 drill state) | String, Object, Boolean, String or null |
 | `AsuSrTrendLayer` | `open`; Visual1's `selectedRegion` (CPASU Trend drill); Visual2's `plan`; Visual3's `modalPeriod` | Boolean, String or null, String, String or null |

@@ -1,5 +1,12 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## Granularity Toggle: Default Back to Fiscal Year (2026-07-02)
+
+- **Fixed the default view.** The View By toggle shipped defaulting to "Quarter" (so every chart rendered 12 quarterly bars instead of 3 FY bars out of the box) — corrected so nothing is pre-selected by default, same as every other filter defaulting to "All." No selection = Fiscal Year, exactly matching every chart's pre-toggle behavior.
+- **Clicking the active option now toggles it off** back to the Fiscal Year default, instead of the pill always having exactly one of Quarter/Month/Week active (unlike the DB/OSP pill, which is a genuine 3-way exclusive choice with no "off" state).
+- Fixed a latent bug this surfaced: `hesData.js`'s `regionTrendGranularity()` had a `= 'Quarter'` default *parameter*, which only applies when the argument is omitted entirely — since the real caller now explicitly passes `null` (not `undefined`), that default silently never fired, and `null` was falling through `periodsForGranularity()`'s branching straight to the Quarter list. Fixed by explicitly checking for a falsy/`'Year'` value and returning the plain fiscal years in that case, matching every other selector's convention.
+- Re-verified with the same throwaway-Node-script approach as the original feature: confirmed `planOverPlanByFY`, `actualVsPlanByFY`, `asuByFY`, `ucrByFY` all return plain `['FY25','FY26','FY27']` period lists both when `granularity` is omitted and when it's explicitly `null`, and that `regionTrendGranularity(filters, null)` now returns `{ granularity: 'Year', periods: ['FY25','FY26','FY27'] }` instead of silently defaulting to quarters.
+
 ## Global Time-Granularity Toggle (Quarter/Month/Week) for Both Pages (2026-07-02)
 
 - **New page-wide "View By" control** — a Quarter/Month/Week pill toggle placed at the top-right of each page's filter bar (in the same row as the value-filter clusters, after a divider) — changes what axis granularity every time-series chart renders at, on both ESG Forecasting and HES Forecasting. Default: Quarter. State lives in `ForecastingPage.jsx`/`HesForecastingPage.jsx` alongside `filters`, passed down to every chart that needs it.
