@@ -4,9 +4,9 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import {
-  capacityCardData, asuByFY, srDbOspByFY, cpasuByFY, ucrByFY, ucrImpactedSrByFY,
-} from '../../data/capacityData'
-import { C, Tip } from './CapacityChartKit'
+  hesCardData, asuByFY, srDbOspByFY, cpasuByFY, ucrByFY, ucrImpactedSrByFY,
+} from '../../data/hesData'
+import { C, Tip } from './HesChartKit'
 
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
 
@@ -174,9 +174,9 @@ function DrillDownPanel({ type, filters, onClose }) {
   )
 }
 
-export default function CapacityMetricCards({ filters }) {
+export default function HesMetricCards({ filters }) {
   const [active, setActive] = useState(null)
-  const d = useMemo(() => capacityCardData(filters), [filters])
+  const d = useMemo(() => hesCardData(filters), [filters])
   const toggle = key => setActive(prev => prev === key ? null : key)
 
   return (

@@ -5,8 +5,8 @@ import {
 } from 'recharts'
 import {
   asuSrTrendByFY, asuSrTrendCountries, srBotsByFY, ucrByFY, ucrNonAdherentQueues,
-} from '../../data/capacityData'
-import { C, Visual, Tip } from './CapacityChartKit'
+} from '../../data/hesData'
+import { C, Visual, Tip } from './HesChartKit'
 
 function RegionCountryToggle({ viewMode, setViewMode, country, setCountry, countries }) {
   return (

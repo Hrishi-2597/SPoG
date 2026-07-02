@@ -1,7 +1,7 @@
 # Technical Specification — ISG SPoG ESG Forecasting Dashboard
 
 ## Overview
-A React application that renders an analytics dashboard for Dell's ISG Enterprise Service Group (ESG), with **two pages** switched via a header toggle: **ESG Forecasting** (call volume plans, actuals vs plan adherence, geographic accuracy distribution) and **ESG Capacity Planning** (ASU/SR/UCR service-unit tracking, built from slides 5–6 of `SPOG_views.pptx`). All data is currently mocked — no backend — but every filter on both pages is fully live: each recomputes cards and charts from a shared, filterable fact table (see Data Model below).
+A React application that renders an analytics dashboard for Dell's ISG Enterprise Service Group (ESG), with **two pages** switched via a header toggle: **ESG Forecasting** (call volume plans, actuals vs plan adherence, geographic accuracy distribution) and **HES Forecasting** (ASU/SR/UCR service-unit tracking, built from slides 5–6 of `SPOG_views.pptx`; briefly named "ESG Capacity Planning" before the 2026-07-02 rename). All data is currently mocked — no backend — but every filter on both pages is fully live: each recomputes cards and charts from a shared, filterable fact table (see Data Model below).
 
 ---
 
@@ -30,7 +30,7 @@ SPoG/
 │       └── deploy.yml          # CI/CD: build → push to gh-pages branch
 ├── src/
 │   ├── main.jsx                # React root mount
-│   ├── App.jsx                 # Shell: header + page toggle (Forecasting/Capacity Planning) + footer
+│   ├── App.jsx                 # Shell: header + page toggle (ESG Forecasting/HES Forecasting) + footer
 │   ├── index.css               # Tailwind imports + global scrollbar/select styles
 │   ├── components/
 │   │   ├── ForecastingPage.jsx # ESG Forecasting page body (filters + cards + 3 layers + RCA/CLCA sidebar)
@@ -40,19 +40,19 @@ SPoG/
 │   │   ├── Layer1PlanOverPlan.jsx  # Plan vs Plan: 3 chart visuals + plan selectors
 │   │   ├── Layer2ActualVsPlan.jsx  # Actual vs Plan: 3 chart visuals + stacked bar
 │   │   ├── Layer3GeoMap.jsx    # World map with accuracy markers + summary table
-│   │   └── capacity/           # ESG Capacity Planning page (all new, 2026-07-02)
-│   │       ├── CapacityPlanningPage.jsx  # Page body: filters + cards + 4 layers (no RCA/CLCA sidebar)
-│   │       ├── CapacityFilterPanel.jsx   # 7 filters: LOB / FY-Qtr-Month-Week / Business Partner-Global Grouping
-│   │       ├── CapacityChartKit.jsx      # Shared chart primitives (Visual wrapper, Tip, PlanDropdowns, truncate, etc.)
-│   │       ├── CapacityMetricCards.jsx   # 5 KPI cards + drill-down panel (ASU/SR/CPASU/UCR/UCR-Impacted-SR)
-│   │       ├── AsuLayer.jsx              # Layer 01 — Actual vs Plan, Plan-on-Plan, Plan Impact Analysis (region→LOB drill)
-│   │       ├── SrLayer.jsx               # Layer 02 — same structure as AsuLayer, SR metric
-│   │       ├── AsuSrTrendLayer.jsx       # Layer 03 — ASU/SR+CPASU trend (Region/Country), UCR Impact, UCR Runrate+non-adherent queues
-│   │       └── CapacityGeoMap.jsx        # Layer 04 — choropleth by LOB adherence per region
+│   │   └── hes/                # HES Forecasting page (all new, 2026-07-02; named "capacity/" until the same-day rename)
+│   │       ├── HesForecastingPage.jsx  # Page body: filters + cards + 4 layers (no RCA/CLCA sidebar)
+│   │       ├── HesFilterPanel.jsx      # 7 filters: LOB / FY-Qtr-Month-Week / Business Partner-Global Grouping
+│   │       ├── HesChartKit.jsx         # Shared chart primitives (Visual wrapper, Tip, PlanDropdowns, truncate, etc.)
+│   │       ├── HesMetricCards.jsx      # 5 KPI cards + drill-down panel (ASU/SR/CPASU/UCR/UCR-Impacted-SR)
+│   │       ├── AsuLayer.jsx            # Layer 01 — Actual vs Plan, Plan-on-Plan, Plan Impact Analysis (region→LOB drill)
+│   │       ├── SrLayer.jsx             # Layer 02 — same structure as AsuLayer, SR metric
+│   │       ├── AsuSrTrendLayer.jsx     # Layer 03 — ASU/SR+CPASU trend (Region/Country), UCR Impact, UCR Runrate+non-adherent queues
+│   │       └── HesGeoMap.jsx           # Layer 04 — choropleth by LOB adherence per region
 │   └── data/
-│       ├── mockData.js         # Forecasting page's static mock data (CQNs, plans, KPIs, geo) — also exports matchesMulti, REGIONS,
-│       │                         regionForCountry, and other primitives capacityData.js reuses
-│       └── capacityData.js     # Capacity Planning page's data model (LOB list, ASU/SR/UCR series, LOB_QUEUES, region-impact deltas)
+│       ├── mockData.js         # ESG Forecasting page's static mock data (CQNs, plans, KPIs, geo) — also exports matchesMulti, REGIONS,
+│       │                         regionForCountry, and other primitives hesData.js reuses
+│       └── hesData.js          # HES Forecasting page's data model (LOB list, ASU/SR/UCR series, LOB_QUEUES, region-impact deltas)
 ├── index.html                  # Vite entry HTML
 ├── vite.config.js              # base: '/ISG-SPoG/' for GitHub Pages paths
 ├── tailwind.config.js          # Custom navy color palette
@@ -87,13 +87,13 @@ App
     └── Summary table     — geoRegionData(filters) or geoSubRegionRows(filters), by view mode
 ```
 
-### CapacityPlanningPage (rendered instead of ForecastingPage when the header toggle is on "ESG Capacity Planning")
+### HesForecastingPage (rendered instead of ForecastingPage when the header toggle is on "HES Forecasting")
 
 ```
-CapacityPlanningPage
-├── CapacityFilterPanel        — Controlled: filters state lifted to CapacityPlanningPage
-├── CapacityMetricCards(filters) — capacityCardData(filters) recomputed on every change
-│   └── DrillDownPanel          — Inline, one of AsuTrendChart/SrDbOspChart/CpasuChart/CurrentUcrChart/UcrImpactedChart
+HesForecastingPage
+├── HesFilterPanel        — Controlled: filters state lifted to HesForecastingPage
+├── HesMetricCards(filters) — hesCardData(filters) recomputed on every change
+│   └── DrillDownPanel     — Inline, one of AsuTrendChart/SrDbOspChart/CpasuChart/CurrentUcrChart/UcrImpactedChart
 ├── AsuLayer(filters)     — Collapsible, badge "01"
 │   ├── Visual1           — ComposedChart: asuByFY(filters) + Adherence% line, Plan dropdown
 │   ├── Visual2           — ComposedChart: asuPlanVsPlanByFY(filters) + Variance% line, Plan A/B dropdowns
@@ -104,8 +104,8 @@ CapacityPlanningPage
 │   ├── Visual1           — ComposedChart: asuSrTrendByFY(filters, country) + CPASU line; Region/Country toggle
 │   ├── Visual2           — BarChart: srBotsByFY(filters), humanSR+botsSR stacked, SR Plan as a separate bar
 │   └── Visual3           — ComposedChart: ucrByFY(filters) bar+dashed target line; ucrNonAdherentQueues(filters) list below
-└── CapacityGeoMap(filters)  — Collapsible, badge "04"; same choropleth mechanism as Layer3GeoMap,
-                                colored by geoAdherenceByRegion(filters); no Region/Sub-region toggle
+└── HesGeoMap(filters)    — Collapsible, badge "04"; same choropleth mechanism as Layer3GeoMap,
+                            colored by geoAdherenceByRegion(filters); no Region/Sub-region toggle
 ```
 No RCA/CLCA sidebar on this page.
 
@@ -117,17 +117,17 @@ No external state library. All state is local React `useState`:
 
 | Component | State | Type |
 |---|---|---|
-| `App` | `page` ('forecasting'\|'capacity') | String |
+| `App` | `page` ('forecasting'\|'hes') | String |
 | `ForecastingPage` | `filters` | Object (12 filter keys) |
 | `MetricCards` | `active` (drill-down) | String or null |
 | `Layer1PlanOverPlan` | `plans` (planA/planB, reset by `filters.planName` via `useEffect`), `open` | Object, Boolean |
 | `Layer2ActualVsPlan` | `plan` (reset by `filters.planName` via `useEffect`), `open` | String, Boolean |
 | `Layer3GeoMap` | `viewMode` (Region/Country), `hovered`, `open` | String, Object, Boolean |
-| `CapacityPlanningPage` | `filters` | Object (7 filter keys) |
-| `CapacityMetricCards` | `active` (drill-down) | String or null |
+| `HesForecastingPage` | `filters` | Object (7 filter keys) |
+| `HesMetricCards` | `active` (drill-down) | String or null |
 | `AsuLayer` / `SrLayer` | `plan`, `plans` (planA/planB), `open`, `selectedRegion` (Visual3 drill state) | String, Object, Boolean, String or null |
 | `AsuSrTrendLayer` | `open`, `viewMode` (Region/Country), `country` | Boolean, String, String |
-| `CapacityGeoMap` | `open`, `hovered` | Boolean, Object |
+| `HesGeoMap` | `open`, `hovered` | Boolean, Object |
 
 `filters` flows down as a prop to `MetricCards`, all three layers, and every Visual sub-component. Each chart/card recomputes its data via `useMemo(() => selectorFn(filters), [filters])`, calling into the selector functions exported from `mockData.js` (see Data Model). No FY/Quarter/Week drill-toggle state exists anymore — those were removed; the top filter bar's Fiscal Year/Quarter/Week filters are the only time control, and charts render at Fiscal Year granularity only.
 
@@ -253,7 +253,7 @@ Selecting Region = "Global" (or a Sub-region with no map presence) returns an em
 
 ---
 
-## Data Model (`src/data/capacityData.js`)
+## Data Model (`src/data/hesData.js`)
 
 Same conventions as `mockData.js`: static exports are datasets, lowercase functions are the live selectors components call. Imports `FISCAL_YEARS`, `FISCAL_QUARTERS`, `FISCAL_WEEK_LIST`, `BUSINESS_PARTNERS`, `REGIONS`, `ACTIVE_QUEUE_NAMES`, `regionForCountry`, and `matchesMulti` from `mockData.js` rather than duplicating them.
 
@@ -274,7 +274,7 @@ LOB_FACTS — LOB_LIST.map(...) → Array<{ lob, businessPartner, globalGrouping
   businessPartner/globalGrouping assigned round-robin (list[i % list.length]) — same
   "real names + illustrative structure" convention as ACTIVE_QUEUES in mockData.js
 filterLobs(filters) — LOB_FACTS rows matching filters.lob / businessPartner / globalGrouping (matchesMulti)
-capacityEffectiveFiscalYears(filters) — Week > Month > Quarter > Year precedence
+hesEffectiveFiscalYears(filters) — Week > Month > Quarter > Year precedence
 lobScopeRatio(filters) — filterLobs(filters).length / LOB_LIST.length, used to scale FY series
   so a narrower LOB selection produces proportionally smaller ASU/SR numbers
 ```
@@ -283,7 +283,7 @@ lobScopeRatio(filters) — filterLobs(filters).length / LOB_LIST.length, used to
 ```
 ASU_BY_FY, SR_BY_FY               — {period, plan, actual, adherence (getter)} × 3 FYs, static
 ASU_PLAN_VS_PLAN_BY_FY, SR_PLAN_VS_PLAN_BY_FY — {period, plan1, plan2, variance (getter)} × 3 FYs, static
-asuByFY(filters) / srByFY(filters)                 — narrowed to capacityEffectiveFiscalYears, scaled by lobScopeRatio
+asuByFY(filters) / srByFY(filters)                 — narrowed to hesEffectiveFiscalYears, scaled by lobScopeRatio
 asuPlanVsPlanByFY(filters) / srPlanVsPlanByFY(filters) — same narrowing + scaling
 cpasuByFY(filters) — cpasu = sr.actual / asu.actual per period, rounded to 2 decimals (backs the CPASU card + drill-down)
 ```
@@ -291,7 +291,7 @@ cpasuByFY(filters) — cpasu = sr.actual / asu.actual per period, rounded to 2 d
 ### UCR
 ```
 UCR_BY_FY — {period, target, current, adherence (getter)} × 3 FYs, static (BASE_UCR_TARGET 82/85/88)
-ucrByFY(filters) — narrowed to capacityEffectiveFiscalYears
+ucrByFY(filters) — narrowed to hesEffectiveFiscalYears
 ucrImpactedSrByFY(filters) — {period, actualSR, srDeflected} — srDeflected ≈ 8-11% of actualSR, illustrative
 srBotsByFY(filters) — {period, humanSR, botsSR (~35% of actual), plan}
 srDbOspByFY(filters) — {period, db (~70% of actual), osp}
@@ -326,12 +326,12 @@ asuSrTrendByFY(filters, country=null) — Region mode: full aggregate (asuByFY/s
 ```
 lobAdherenceValue(regionIndex, lobIndex) = 65 + ((regionIndex*7 + lobIndex*11) % 30) — illustrative
 geoAdherenceByRegion(filters) — averages adherence across filterLobs(filters) (or all 33 LOBs if
-  none selected) for each of the 5 REGIONS; consumed by CapacityGeoMap's choropleth fill
+  none selected) for each of the 5 REGIONS; consumed by HesGeoMap's choropleth fill
 ```
 
 ### Cards
 ```
-capacityCardData(filters) → { asuActuals, srActuals, cpasu, currentUcr, ucrImpactedSr }, each the
+hesCardData(filters) → { asuActuals, srActuals, cpasu, currentUcr, ucrImpactedSr }, each the
   latest-FY snapshot (asu[asu.length-1] etc.) off the selector functions above
 ```
 
@@ -377,6 +377,6 @@ Steps:
 4. No mobile/responsive layout optimisation (designed for 1280px+ screens)
 5. No drill-down UI for `INACTIVE_QUEUE_NAMES` (406 real names) — only the count surfaces on the Total Queues card
 6. Plan Name filter only pre-selects Plan A on Layer 1/2 — Plan B and the per-visual overrides are unaffected, by design (see `design_choice.md`)
-7. `LOB_QUEUES` (Capacity Planning) only has real active/inactive queue data for one LOB ("High End Storage") — every other LOB falls back to a generic queue-name sample in the UCR non-adherent-queue list
-8. `GLOBAL_GROUPING_LIST` (Capacity Planning) is an inference from an older PPT note, not explicitly confirmed by the user — revisit if it turns out to be wrong
-9. Capacity Planning's Geo Map has no Region/Sub-region toggle (unlike Forecasting's) since the source deck only specifies a region-level view; ASU/SR region-plan visuals (`asuRegionPlans`/`srRegionPlans`) also don't yet respond to filters, since the deck shows a fixed 3-region (NAMER/EMEA/APJ) view
+7. `LOB_QUEUES` (HES Forecasting) only has real active/inactive queue data for one LOB ("High End Storage") — every other LOB falls back to a generic queue-name sample in the UCR non-adherent-queue list
+8. `GLOBAL_GROUPING_LIST` (HES Forecasting) is an inference from an older PPT note, not explicitly confirmed by the user — revisit if it turns out to be wrong
+9. HES Forecasting's Geo Map has no Region/Sub-region toggle (unlike ESG Forecasting's) since the source deck only specifies a region-level view; ASU/SR region-plan visuals (`asuRegionPlans`/`srRegionPlans`) also don't yet respond to filters, since the deck shows a fixed 3-region (NAMER/EMEA/APJ) view

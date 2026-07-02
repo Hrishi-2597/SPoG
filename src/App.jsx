@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import ForecastingPage from './components/ForecastingPage'
-import CapacityPlanningPage from './components/capacity/CapacityPlanningPage'
+import HesForecastingPage from './components/hes/HesForecastingPage'
 
 const PAGES = [
   { key: 'forecasting', label: 'ESG Forecasting' },
-  { key: 'capacity', label: 'ESG Capacity Planning' },
+  { key: 'hes', label: 'HES Forecasting' },
 ]
 
 function PageToggle({ page, setPage }) {
@@ -78,7 +78,7 @@ export default function App() {
       {/* Accent line under header */}
       <div style={{ height: 1, background: 'linear-gradient(90deg, #38bdf8 0%, rgba(56,189,248,0.1) 40%, transparent 70%)' }} />
 
-      {page === 'forecasting' ? <ForecastingPage /> : <CapacityPlanningPage />}
+      {page === 'forecasting' ? <ForecastingPage /> : <HesForecastingPage />}
 
       <footer style={{
         textAlign: 'center', fontSize: 10, color: '#3d607a',

@@ -1,8 +1,8 @@
-// Mock data + selectors for the ESG Capacity Planning page (ASU / SR / UCR).
+// Mock data + selectors for the HES Forecasting page (ASU / SR / UCR).
 // Structurally mirrors mockData.js (multi-select filters as arrays, FY-level charts
 // narrowed by the most specific time filter, real names paired with illustrative
-// numbers) but is a fully separate module — Capacity Planning has its own filter set
-// and metrics, and keeping it decoupled avoids any risk to the Forecasting page.
+// numbers) but is a fully separate module — HES Forecasting has its own filter set
+// and metrics, and keeping it decoupled avoids any risk to the ESG Forecasting page.
 import {
   FISCAL_YEARS, FISCAL_QUARTERS, FISCAL_WEEK_LIST, BUSINESS_PARTNERS, REGIONS,
   ACTIVE_QUEUE_NAMES, regionForCountry, matchesMulti,
@@ -26,12 +26,12 @@ export const FISCAL_MONTH_LIST = FISCAL_YEARS.flatMap(fy =>
   Array.from({ length: 12 }, (_, i) => `${fy}M${String(i + 1).padStart(2, '0')}`)
 )
 
-const CAPACITY_FILTER_KEYS = ['lob', 'businessPartner', 'globalGrouping']
-const CAPACITY_FIELD_BY_KEY = { lob: 'lob', businessPartner: 'businessPartner', globalGrouping: 'globalGrouping' }
+const HES_FILTER_KEYS = ['lob', 'businessPartner', 'globalGrouping']
+const HES_FIELD_BY_KEY = { lob: 'lob', businessPartner: 'businessPartner', globalGrouping: 'globalGrouping' }
 
 // Week > Month > Quarter > Year precedence, same idea as Forecasting's effectiveFiscalYears,
 // extended with the extra Month granularity this page's filter bar has.
-export function capacityEffectiveFiscalYears(filters = {}) {
+export function hesEffectiveFiscalYears(filters = {}) {
   const picked = (filters.fiscalWeek?.length && filters.fiscalWeek)
     || (filters.fiscalMonth?.length && filters.fiscalMonth)
     || (filters.fiscalQuarter?.length && filters.fiscalQuarter)
@@ -52,7 +52,7 @@ export const LOB_FACTS = LOB_LIST.map((lob, i) => ({
 
 export function filterLobs(filters = {}) {
   return LOB_FACTS.filter(l =>
-    CAPACITY_FILTER_KEYS.every(key => matchesMulti(filters[key], l[CAPACITY_FIELD_BY_KEY[key]]))
+    HES_FILTER_KEYS.every(key => matchesMulti(filters[key], l[HES_FIELD_BY_KEY[key]]))
   )
 }
 
@@ -97,28 +97,28 @@ export const SR_PLAN_VS_PLAN_BY_FY = FISCAL_YEARS.map(fy => ({
 }))
 
 export function asuByFY(filters = {}) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   const ratio = lobScopeRatio(filters)
   return ASU_BY_FY.filter(d => years.includes(d.period))
     .map(d => ({ ...d, plan: Math.round(d.plan * ratio), actual: Math.round(d.actual * ratio) }))
 }
 
 export function srByFY(filters = {}) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   const ratio = lobScopeRatio(filters)
   return SR_BY_FY.filter(d => years.includes(d.period))
     .map(d => ({ ...d, plan: Math.round(d.plan * ratio), actual: Math.round(d.actual * ratio) }))
 }
 
 export function asuPlanVsPlanByFY(filters = {}) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   const ratio = lobScopeRatio(filters)
   return ASU_PLAN_VS_PLAN_BY_FY.filter(d => years.includes(d.period))
     .map(d => ({ period: d.period, plan1: Math.round(d.plan1 * ratio), plan2: Math.round(d.plan2 * ratio), variance: d.variance }))
 }
 
 export function srPlanVsPlanByFY(filters = {}) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   const ratio = lobScopeRatio(filters)
   return SR_PLAN_VS_PLAN_BY_FY.filter(d => years.includes(d.period))
     .map(d => ({ period: d.period, plan1: Math.round(d.plan1 * ratio), plan2: Math.round(d.plan2 * ratio), variance: d.variance }))
@@ -145,7 +145,7 @@ export const UCR_BY_FY = FISCAL_YEARS.map(fy => ({
 }))
 
 export function ucrByFY(filters = {}) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   return UCR_BY_FY.filter(d => years.includes(d.period))
 }
 
@@ -251,7 +251,7 @@ export const LOB_QUEUES = {
 // Forecasting queue list, tagged with a below-target runrate for this drill-down.
 const NON_ADHERENT_FALLBACK = ACTIVE_QUEUE_NAMES.slice(0, 40)
 export function ucrNonAdherentQueues(filters = {}, count = 5) {
-  const years = capacityEffectiveFiscalYears(filters)
+  const years = hesEffectiveFiscalYears(filters)
   const fy = years[years.length - 1] || 'FY27'
   const target = UCR_BY_FY.find(d => d.period === fy)?.target ?? 85
   const offset = FISCAL_YEARS.indexOf(fy) * count
@@ -345,7 +345,7 @@ export { regionForCountry }
 
 // ── Card headlines ─────────────────────────────────────────────────────────
 // Latest in-scope fiscal year's snapshot for each of the 5 KPI cards.
-export function capacityCardData(filters = {}) {
+export function hesCardData(filters = {}) {
   const asu = asuByFY(filters)
   const sr = srByFY(filters)
   const ucr = ucrByFY(filters)

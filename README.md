@@ -1,6 +1,6 @@
 # ISG-SPoG
 
-Single Pane of Glass (SPoG) dashboard for ISG Business — Enterprise Service Group (ESG). Two pages, switched via a toggle in the header: **ESG Forecasting** and **ESG Capacity Planning**.
+Single Pane of Glass (SPoG) dashboard for ISG Business — Enterprise Service Group (ESG). Two pages, switched via a toggle in the header: **ESG Forecasting** and **HES Forecasting**.
 
 ## Tech Stack
 - React 18 + Vite
@@ -18,7 +18,7 @@ Single Pane of Glass (SPoG) dashboard for ISG Business — Enterprise Service Gr
 - Layer 3: Interactive world geo map with region/sub-region toggle and color-coded accuracy
 - RCA & CLCA sidebar alongside the analysis layers
 
-### ESG Capacity Planning
+### HES Forecasting
 - 7-filter panel (LOB, Fiscal Year/Quarter/Month/Week, Business Partner, Global Grouping)
 - 5 KPI cards: ASU Actuals, SR Actuals, CPASU, Current UCR, UCR Impacted SR
 - Layer 01/02: ASU/SR Actual vs Plan+Adherence, Plan-on-Plan comparison, Plan Impact Analysis (click a region to see LOB contribution)

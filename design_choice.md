@@ -252,23 +252,27 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
-## ESG Capacity Planning: New Page via Header Toggle (2026-07-02)
+## HES Forecasting: New Page via Header Toggle (2026-07-02)
 
 ### Page toggle, not a route
-**Decision:** `App.jsx` holds a single `page` state ('forecasting'|'capacity') and renders `ForecastingPage` or `CapacityPlanningPage` — no router, no URL change.
+**Decision:** `App.jsx` holds a single `page` state ('forecasting'|'hes') and renders `ForecastingPage` or `HesForecastingPage` — no router, no URL change.
 **Why:** The app has always been a single internal tool with no need for shareable/bookmarkable URLs per page, and adding React Router for two pages would be new infrastructure for no real benefit. The existing `.drill-toggle`/`.drill-btn` pill pattern already reads as "switch between two views" everywhere else in the app, so reusing it for page-level navigation is more consistent than introducing a new nav pattern.
 
 ### ForecastingPage extracted verbatim, not rewritten
 **Decision:** The entire pre-existing `App.jsx` body (filters through footer-adjacent content) moved into `ForecastingPage.jsx` unchanged; `App.jsx` became a shell with just the header, toggle, and footer.
-**Why:** The Forecasting page was just declared "done" — extracting it verbatim guarantees zero visual or behavioral regression while making room for a second page. Splitting `SectionDivider` out separately (rather than duplicating it into `capacity/`) means both pages share one implementation of the "KEY METRICS" / "ANALYSIS LAYERS" label.
+**Why:** The Forecasting page was just declared "done" — extracting it verbatim guarantees zero visual or behavioral regression while making room for a second page. Splitting `SectionDivider` out separately (rather than duplicating it into `hes/`) means both pages share one implementation of the "KEY METRICS" / "ANALYSIS LAYERS" label.
 
 ### Built directly from confirmed slides, no further data requests mid-build
 **Decision:** Once the user said "just build the page over these two slides" (slides 5–6, ASU/SR/UCR), the page was built with reasonable illustrative choices for anything not explicitly supplied (LOB→region-plan mapping, UCR targets, ASU/SR base volumes), rather than pausing again to ask for every missing number.
-**Why:** The user explicitly asked to proceed rather than wait — matching the same "real names + illustrative structure" principle already established for the Forecasting page (see below), just applied to a new dataset. Real data supplied mid-build (the 33 LOB names, the HES queue lists) was integrated immediately rather than deferred.
+**Why:** The user explicitly asked to proceed rather than wait — matching the same "real names + illustrative structure" principle already established for the ESG Forecasting page (see below), just applied to a new dataset. Real data supplied mid-build (the 33 LOB names, the HES queue lists) was integrated immediately rather than deferred.
 
-### No RCA/CLCA sidebar on Capacity Planning
-**Decision:** `RcaClcaPanel` only renders on the Forecasting page; Capacity Planning's 4 layers run full-width with no sidebar.
-**Why:** The sidebar's actual content (RCA/CLCA findings) is Forecasting-specific illustrative copy tied to that page's metrics — copying it verbatim onto a page about ASU/SR/UCR would be visibly wrong content, and the ASU/SR/UCR slides never showed an equivalent panel. If the user wants a Capacity-specific RCA/CLCA sidebar later, it should get its own content, not a reused copy.
+### No RCA/CLCA sidebar on HES Forecasting
+**Decision:** `RcaClcaPanel` only renders on the ESG Forecasting page; HES Forecasting's 4 layers run full-width with no sidebar.
+**Why:** The sidebar's actual content (RCA/CLCA findings) is ESG-Forecasting-specific illustrative copy tied to that page's metrics — copying it verbatim onto a page about ASU/SR/UCR would be visibly wrong content, and the ASU/SR/UCR slides never showed an equivalent panel. If the user wants an HES-specific RCA/CLCA sidebar later, it should get its own content, not a reused copy.
+
+### Renamed "ESG Capacity Planning" → "HES Forecasting" (2026-07-02, same day)
+**Decision:** Renamed the page label, every component/file/folder (`capacity/` → `hes/`, `CapacityPlanningPage.jsx` → `HesForecastingPage.jsx`, `CapacityFilterPanel.jsx` → `HesFilterPanel.jsx`, `CapacityChartKit.jsx` → `HesChartKit.jsx`, `CapacityMetricCards.jsx` → `HesMetricCards.jsx`, `CapacityGeoMap.jsx` → `HesGeoMap.jsx`, `capacityData.js` → `hesData.js`), and every internal identifier that carried "capacity" in its name (`capacityCardData` → `hesCardData`, `capacityEffectiveFiscalYears` → `hesEffectiveFiscalYears`), via `git mv` to preserve file history.
+**Why:** Requested directly. The page is fundamentally about HES (High End Storage) service-unit tracking, not a general capacity-planning concept — "HES Forecasting" names what the page actually is. Renamed identifiers and files along with the label, not just the visible string, so the codebase doesn't end up with a page called "HES Forecasting" built out of files and functions still named "Capacity" — that mismatch would confuse the next person (or agent) who opens the folder. The pre-existing "Capacity Code" filter field on the *ESG Forecasting* page (a real queue attribute, unrelated to this page) was deliberately left untouched — it's a different concept that happens to share a word.
 
 ### LOB filter reuses the Queue Name filter's real-data-swap pattern
 **Decision:** `ucrNonAdherentQueues(filters)` checks whether the selected LOB has a `LOB_QUEUES` entry (currently only "High End Storage") and swaps to its real active-queue list when so, exactly like `cqnPlanVariance`/`cqnActualVariance` on the Forecasting page swap to genuinely filtered real queues rather than fabricating a new number per filter state.

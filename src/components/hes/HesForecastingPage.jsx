@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import CapacityFilterPanel from './CapacityFilterPanel'
-import CapacityMetricCards from './CapacityMetricCards'
+import HesFilterPanel from './HesFilterPanel'
+import HesMetricCards from './HesMetricCards'
 import AsuLayer from './AsuLayer'
 import SrLayer from './SrLayer'
 import AsuSrTrendLayer from './AsuSrTrendLayer'
-import CapacityGeoMap from './CapacityGeoMap'
+import HesGeoMap from './HesGeoMap'
 import SectionDivider from '../SectionDivider'
 
 // Every filter is multi-select: [] means "no selection = All" — same convention as
@@ -19,22 +19,22 @@ const DEFAULT_FILTERS = {
   globalGrouping: [],
 }
 
-export default function CapacityPlanningPage() {
+export default function HesForecastingPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
   return (
     <>
-      <CapacityFilterPanel filters={filters} onChange={setFilters} />
+      <HesFilterPanel filters={filters} onChange={setFilters} />
 
       <SectionDivider label="Key Metrics" />
-      <CapacityMetricCards filters={filters} />
+      <HesMetricCards filters={filters} />
 
       <SectionDivider label="Analysis Layers" />
       <div className="px-4 pb-4 flex flex-col gap-3">
         <AsuLayer filters={filters} />
         <SrLayer filters={filters} />
         <AsuSrTrendLayer filters={filters} />
-        <CapacityGeoMap filters={filters} />
+        <HesGeoMap filters={filters} />
       </div>
     </>
   )

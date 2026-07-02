@@ -4,8 +4,8 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import { PLAN_NAMES } from '../../data/mockData'
-import { asuByFY, asuPlanVsPlanByFY, asuRegionPlans, asuLobImpact, IMPACT_REGIONS } from '../../data/capacityData'
-import { C, Visual, Tip, PlanDropdowns, PlanSelect } from './CapacityChartKit'
+import { asuByFY, asuPlanVsPlanByFY, asuRegionPlans, asuLobImpact, IMPACT_REGIONS } from '../../data/hesData'
+import { C, Visual, Tip, PlanDropdowns, PlanSelect } from './HesChartKit'
 
 const PLANS = PLAN_NAMES.filter(p => p !== 'Actual')
 
