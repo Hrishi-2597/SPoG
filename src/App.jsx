@@ -1,40 +1,27 @@
 import React, { useState } from 'react'
-import FilterPanel from './components/FilterPanel'
-import MetricCards from './components/MetricCards'
-import Layer1PlanOverPlan from './components/Layer1PlanOverPlan'
-import Layer2ActualVsPlan from './components/Layer2ActualVsPlan'
-import Layer3GeoMap from './components/Layer3GeoMap'
-import RcaClcaPanel from './components/RcaClcaPanel'
+import ForecastingPage from './components/ForecastingPage'
+import CapacityPlanningPage from './components/capacity/CapacityPlanningPage'
 
-// Every filter below is multi-select: [] means "no selection = All". DB/OSP alone stays
-// a single string since it's a 3-way segmented pill, not a searchable dropdown.
-const DEFAULT_FILTERS = {
-  cqn:            [],
-  capacityCode:   [],
-  planName:       [],
-  fiscalYear:     [],
-  fiscalQuarter:  [],
-  fiscalWeek:     [],
-  channel:        [],
-  businessPartner:[],
-  region:         [],
-  subRegion:      [],
-  l5Manager:      [],
-  dbOsp:          'DB',
-}
+const PAGES = [
+  { key: 'forecasting', label: 'ESG Forecasting' },
+  { key: 'capacity', label: 'ESG Capacity Planning' },
+]
 
-function SectionDivider({ label }) {
+function PageToggle({ page, setPage }) {
   return (
-    <div className="flex items-center gap-3 px-4 pt-4 pb-1">
-      <span className="text-[10px] font-bold tracking-[0.15em] uppercase"
-        style={{ color: '#38bdf8' }}>{label}</span>
-      <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(56,189,248,0.3), transparent)' }} />
+    <div className="drill-toggle">
+      {PAGES.map(p => (
+        <button key={p.key} onClick={() => setPage(p.key)} className={`drill-btn${page === p.key ? ' active' : ''}`}>
+          {p.label}
+        </button>
+      ))}
     </div>
   )
 }
 
 export default function App() {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [page, setPage] = useState('forecasting')
+  const pageLabel = PAGES.find(p => p.key === page)?.label
 
   return (
     <div className="min-h-screen" style={{ background: '#070f1a', color: '#e6f1ff' }}>
@@ -64,12 +51,13 @@ export default function App() {
               ISG SPoG
             </h1>
             <p style={{ fontSize: 10, color: '#7fa8cc', marginTop: 1 }}>
-              Enterprise Service Group · ESG Forecasting
+              Enterprise Service Group · {pageLabel}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          <PageToggle page={page} setPage={setPage} />
           <div style={{ fontSize: 10, color: '#7fa8cc', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{
               width: 6, height: 6, borderRadius: '50%', background: '#34d399',
@@ -90,28 +78,7 @@ export default function App() {
       {/* Accent line under header */}
       <div style={{ height: 1, background: 'linear-gradient(90deg, #38bdf8 0%, rgba(56,189,248,0.1) 40%, transparent 70%)' }} />
 
-      {/* ── Filters ──────────────────────────────────────────────── */}
-      <FilterPanel filters={filters} onChange={setFilters} />
-
-      {/* ── KPI Cards — full width, cards sit alone here ────────────── */}
-      <SectionDivider label="Key Metrics" />
-      <MetricCards filters={filters} />
-
-      {/* ── Analysis Layers + RCA/CLCA sidebar ──────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, paddingRight: 16 }}>
-        <div className="flex-1 min-w-0">
-          <SectionDivider label="Analysis Layers" />
-          <div className="px-4 pb-4 flex flex-col gap-3">
-            <Layer1PlanOverPlan filters={filters} />
-            <Layer2ActualVsPlan filters={filters} />
-            <Layer3GeoMap filters={filters} />
-          </div>
-        </div>
-
-        <div style={{ width: 300, flexShrink: 0, position: 'sticky', top: 14, marginTop: 14 }}>
-          <RcaClcaPanel />
-        </div>
-      </div>
+      {page === 'forecasting' ? <ForecastingPage /> : <CapacityPlanningPage />}
 
       <footer style={{
         textAlign: 'center', fontSize: 10, color: '#3d607a',

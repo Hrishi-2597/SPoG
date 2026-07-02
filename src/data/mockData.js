@@ -339,7 +339,8 @@ export function effectiveFiscalYears(filters = {}) {
 }
 
 // A multi-select filter with no selection ([] or undefined) matches everything.
-function matchesMulti(selected, value) {
+// Exported since other pages' data modules (e.g. capacityData.js) reuse this same rule.
+export function matchesMulti(selected, value) {
   return !selected || selected.length === 0 || selected.includes(value)
 }
 

@@ -252,6 +252,34 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## ESG Capacity Planning: New Page via Header Toggle (2026-07-02)
+
+### Page toggle, not a route
+**Decision:** `App.jsx` holds a single `page` state ('forecasting'|'capacity') and renders `ForecastingPage` or `CapacityPlanningPage` — no router, no URL change.
+**Why:** The app has always been a single internal tool with no need for shareable/bookmarkable URLs per page, and adding React Router for two pages would be new infrastructure for no real benefit. The existing `.drill-toggle`/`.drill-btn` pill pattern already reads as "switch between two views" everywhere else in the app, so reusing it for page-level navigation is more consistent than introducing a new nav pattern.
+
+### ForecastingPage extracted verbatim, not rewritten
+**Decision:** The entire pre-existing `App.jsx` body (filters through footer-adjacent content) moved into `ForecastingPage.jsx` unchanged; `App.jsx` became a shell with just the header, toggle, and footer.
+**Why:** The Forecasting page was just declared "done" — extracting it verbatim guarantees zero visual or behavioral regression while making room for a second page. Splitting `SectionDivider` out separately (rather than duplicating it into `capacity/`) means both pages share one implementation of the "KEY METRICS" / "ANALYSIS LAYERS" label.
+
+### Built directly from confirmed slides, no further data requests mid-build
+**Decision:** Once the user said "just build the page over these two slides" (slides 5–6, ASU/SR/UCR), the page was built with reasonable illustrative choices for anything not explicitly supplied (LOB→region-plan mapping, UCR targets, ASU/SR base volumes), rather than pausing again to ask for every missing number.
+**Why:** The user explicitly asked to proceed rather than wait — matching the same "real names + illustrative structure" principle already established for the Forecasting page (see below), just applied to a new dataset. Real data supplied mid-build (the 33 LOB names, the HES queue lists) was integrated immediately rather than deferred.
+
+### No RCA/CLCA sidebar on Capacity Planning
+**Decision:** `RcaClcaPanel` only renders on the Forecasting page; Capacity Planning's 4 layers run full-width with no sidebar.
+**Why:** The sidebar's actual content (RCA/CLCA findings) is Forecasting-specific illustrative copy tied to that page's metrics — copying it verbatim onto a page about ASU/SR/UCR would be visibly wrong content, and the ASU/SR/UCR slides never showed an equivalent panel. If the user wants a Capacity-specific RCA/CLCA sidebar later, it should get its own content, not a reused copy.
+
+### LOB filter reuses the Queue Name filter's real-data-swap pattern
+**Decision:** `ucrNonAdherentQueues(filters)` checks whether the selected LOB has a `LOB_QUEUES` entry (currently only "High End Storage") and swaps to its real active-queue list when so, exactly like `cqnPlanVariance`/`cqnActualVariance` on the Forecasting page swap to genuinely filtered real queues rather than fabricating a new number per filter state.
+**Why:** Consistent with the standing principle: when real data exists for a slice of the view, use it exactly; when it doesn't (every other LOB), fall back to a clearly-mock but structurally-consistent substitute rather than inventing fake per-LOB queue names.
+
+### Region/LOB delta formula: coprime multiplier instead of a small modulus
+**Decision:** `buildLobImpact()`'s per-LOB delta uses `(i*17 + ri*41) % 131` instead of the original `(i*7 + ri*13) % 21`.
+**Why:** Caught during Playwright verification — the original formula's modulus (21) was small enough relative to its multiplier (7, sharing a factor of 7 with 21) that only 3 distinct residues existed, so 6+ different LOBs displayed an identical delta in the "Plan Impact Analysis" drill-down list, which looked obviously fake once several rows in a row read `-2400`. A modulus that's prime (131) paired with a coprime multiplier (17) guarantees every one of the 33 LOBs maps to a distinct residue for a fixed region — still fully deterministic mock data, just varied enough to not visually expose itself as a repeating pattern.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |

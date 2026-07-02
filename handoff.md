@@ -1,5 +1,32 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## New page: ESG Capacity Planning (2026-07-02)
+
+The dashboard now has **two pages**, switched via a pill toggle in the header (same `.drill-toggle`/`.drill-btn` pattern used elsewhere): **ESG Forecasting** (everything below, unchanged) and **ESG Capacity Planning** (new). `App.jsx` is now a thin shell — header + toggle + footer — that renders `ForecastingPage.jsx` (the old `App.jsx` body, extracted verbatim) or `CapacityPlanningPage.jsx` depending on which pill is active.
+
+Capacity Planning is built from **slides 5–6 of `SPOG_views.pptx`** (the ASU/SR/UCR mockups the user confirmed via screenshot), not the slides originally guessed. Structure:
+
+| Section | File | Content |
+|---|---|---|
+| Filter bar (7 filters: LOB, Fiscal Year/Quarter/Month/Week, Business Partner, Global Grouping) | `CapacityFilterPanel.jsx` | Same clustered/searchable-multi-select pattern as Forecasting |
+| 5 KPI cards (ASU Actuals, SR Actuals, CPASU, Current UCR, UCR Impacted SR) | `CapacityMetricCards.jsx` | Same card + inline drill-down-chart pattern as Forecasting |
+| Layer 01 — ASU Layer | `AsuLayer.jsx` | Actual vs Plan+Adherence, Plan-on-Plan, Plan Impact Analysis (click a region bar → LOB contribution list) |
+| Layer 02 — SR Layer | `SrLayer.jsx` | Same 3 visuals as ASU Layer, SR metric |
+| Layer 03 — ASU Impact on SR Trend | `AsuSrTrendLayer.jsx` | ASU/SR + CPASU trend (Region/Country toggle), UCR Impact on SR (human vs bots stacked), UCR Runrate with Target + non-adherent queue list |
+| Layer 04 — Geo Map | `CapacityGeoMap.jsx` | Choropleth by LOB adherence per region (no Region/Sub-region toggle — deck only specifies region-level) |
+
+No RCA/CLCA sidebar on this page — that panel's content is Forecasting-specific and wasn't part of the ASU/SR/UCR slides; revisit if the user wants an equivalent for Capacity Planning.
+
+**Real data used:**
+- **33 real LOB names** (Avamar, BSAFE, DataDomain, High End Storage, PowerScale, Symmetrix, VCF, XtremIO, etc. — user-supplied verbatim) back the LOB filter and every `LOB_LIST`-keyed structure in `capacityData.js`.
+- **Real active/inactive queue lists for the "High End Storage" LOB** (71 active, ~150 inactive, user-supplied verbatim, stored in `LOB_QUEUES['High End Storage']`) — when the LOB filter is scoped to "High End Storage", the "UCR Runrate with Target" non-adherent-queue list switches from a generic fallback to these real queue names. Verified live: filtering to High End Storage shows real names like "APJ HES MIDRANGE Japanese" and "Global HES Midrange FL" in that list.
+- `GLOBAL_GROUPING_LIST = ['Consumer','Commercial','Enterprise']` is an inference (not yet explicitly confirmed by the user) based on an earlier PPT note about a future Shipment Trend page — flagged as illustrative in code.
+- Everything else (ASU/SR volumes, UCR targets, region-plan-impact deltas, adherence-by-region) is illustrative mock data generated deterministically, same "real names + illustrative structure" convention as the Forecasting page.
+
+**Bug fixed during verification:** `buildLobImpact()`'s delta formula (`(i*7 + ri*13) % 21`) only produced 3 distinct values per region, so multiple LOBs in the "Plan Impact Analysis" drill-down showed an identical delta (e.g. six LOBs all reading `-2400` for NAMER). Fixed by using `(i*17 + ri*41) % 131` — 17 is coprime with the prime modulus 131, so the mapping is injective across all 33 LOBs for a fixed region, guaranteeing distinct deltas.
+
+---
+
 ## Latest polish pass (2026-07-02)
 
 - Diverging "Top Queue Variance" charts (both layers) now print the exact `+X%`/`-X%` value at the end of each bar via two sign-split `LabelList`s using Recharts' built-in `position="left"`/`"right"` — a hand-computed label position drifted into the bar interior and was unreadable. Axis ticks rounded to clean 5% steps; queue-name truncation now breaks on the last word boundary instead of mid-word.
@@ -53,6 +80,7 @@ Push any commit to `main` — GitHub Actions (`.github/workflows/deploy.yml`) au
 | Layer 2: Actual vs Plan (3 visuals) | `src/components/Layer2ActualVsPlan.jsx` | ✅ Done |
 | Layer 3: Geo Map (world map + table) | `src/components/Layer3GeoMap.jsx` | ✅ Done |
 | Real queue/capacity/plan names wired into filters & charts (FY25–FY27, 14 countries) | `src/data/mockData.js` | ✅ Done |
+| ESG Capacity Planning page (toggle in header): filters, 5 KPI cards, ASU/SR/Trend/Geo layers | `src/components/capacity/*`, `src/data/capacityData.js` | ✅ Done |
 | GitHub Actions CI/CD | `.github/workflows/deploy.yml` | ✅ Done |
 
 ---
@@ -139,7 +167,6 @@ Each card's pop-up went from a raw table to an actual chart matching what the ca
 
 These are in the original SPOG_views.pptx but not yet implemented:
 - Slides 3–4: Staffing / Headcount dashboard (SL%, FTE, Attrition, Utilization)
-- Slides 5–6: ASU / SR / UCR layer
 - Slides 7–9: Workload distribution, SLO heatmaps
 - Slides 10–13: Full Forecast Trend page (MAPE, Bias%, queue exception table)
 - Slides 14–16: Shipment Trend page (Consumer/Commercial/Enterprise)
