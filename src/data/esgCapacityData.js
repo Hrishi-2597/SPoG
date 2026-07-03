@@ -332,6 +332,22 @@ export function leavesByQueue(filters = {}, topN = 6) {
     .map(q => ({ name: q.name, actual: q.leavesActual, target: q.leavesPlan, delta: q.leavesDelta }))
 }
 
+// ── Cases per FTE (Key Metrics card) ──────────────────────────────────────────
+const BASE_CPF_PLAN = { FY25: 14.5, FY26: 15.2, FY27: 16.0 }
+
+export const CPF_BY_FY = FISCAL_YEARS.map((fy, i) => ({
+  period: fy, plan: BASE_CPF_PLAN[fy],
+  actual: +(BASE_CPF_PLAN[fy] * (1.05 + (i * 4 % 8) / 100)).toFixed(1),
+}))
+
+// Cases per FTE is a rate (cases handled per head), so its trend chart uses the
+// rate-preserving expansion, same reasoning as UCR target/current on HES Forecasting.
+export function cpfByFY(filters = {}, granularity) {
+  const years = effectiveFiscalYears(filters)
+  const fyRows = CPF_BY_FY.filter(d => years.includes(d.period)).map(d => ({ period: d.period, actual: d.actual, plan: d.plan }))
+  return expandRateToGranularity(fyRows, granularity, ['actual', 'plan'])
+}
+
 // Year-over-year % change between the latest in-scope FY and the one before it;
 // null when there's no prior year in scope, same convention as hesData.js's yoyPct.
 function yoyPct(curr, prev) {
@@ -355,6 +371,7 @@ export function capacityCardData(filters = {}, granularity) {
   const utilFY = UTIL_BY_FY.filter(d => years.includes(d.period))
   const slFY = SL_TREND_BY_FY.filter(d => years.includes(d.period))
   const attritionFY = ATTRITION_BY_FY.filter(d => years.includes(d.period))
+  const cpfFY = CPF_BY_FY.filter(d => years.includes(d.period))
 
   const latestHc = hcGranular[hcGranular.length - 1]
   const latestHcFY = hcFY[hcFY.length - 1]
@@ -365,6 +382,7 @@ export function capacityCardData(filters = {}, granularity) {
   const prevSl = slFY[slFY.length - 2]
   const latestAttrition = attritionFY[attritionFY.length - 1]
   const prevAttrition = attritionFY[attritionFY.length - 2]
+  const latestCpf = cpfFY[cpfFY.length - 1]
 
   return {
     staffing: {
@@ -379,9 +397,8 @@ export function capacityCardData(filters = {}, granularity) {
       actual: latestSl?.slPct ?? 0, target: latestSl ? BASE_SL_TARGET[latestSl.period] : 0,
       period: latestSl?.period, prevPeriod: prevSl?.period, yoyPct: yoyPct(latestSl?.slPct, prevSl?.slPct),
     },
-    totalFte: {
-      actual: latestHc?.actual ?? 0, plan: latestHc?.plan ?? 0,
-      period: latestHcFY?.period, prevPeriod: prevHcFY?.period, yoyPct: yoyPct(latestHcFY?.actual, prevHcFY?.actual),
+    casesPerFte: {
+      actual: latestCpf?.actual ?? 0, plan: latestCpf?.plan ?? 0, period: latestCpf?.period,
     },
     attrition: {
       actual: latestAttrition?.attrition ?? 0, target: latestAttrition ? BASE_ATTRITION_TARGET[latestAttrition.period] : 0,

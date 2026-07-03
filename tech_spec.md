@@ -173,9 +173,11 @@ EsgCapacityPage
 │                              channel/businessPartner/region/subRegion/dbOsp + GranularityToggle
 │                              (businessOrg and country were removed; subRegion replaced country)
 ├── EsgCapacityMetricCards(filters, granularity) — capacityCardData(filters, granularity); 5 cards with
-│   │                          YTD/YoY sub-messages (ytdSub helper, same pattern as HesMetricCards.jsx),
-│   │                          each a Modal drill-down
-│   └── DrillDownModal — StaffingTrendChart / UtilizationTrendChart / SlTrendChart (line-only) / AttritionTrendChart
+│   │                          YTD/YoY sub-messages (ytdSub helper, same pattern as HesMetricCards.jsx) —
+│   │                          except Cases per FTE (replaced Total FTE, 2026-07-03), which shows YTD only,
+│   │                          no comparison/trend pip — each card a Modal drill-down
+│   └── DrillDownModal — StaffingTrendChart / UtilizationTrendChart / SlTrendChart (line-only) /
+│                         CasesPerFteTrendChart (actual+plan lines) / AttritionTrendChart
 ├── HeadcountLayer(filters, granularity)   — badge "01"
 │   ├── Visual1 "Actual vs Plan Variation" (renamed) — ComposedChart: hcStaffingByFY(filters, granularity),
 │   │                                                   PlanSelect now offers PLAN_NAMES; line renamed "Variation %"
@@ -200,7 +202,10 @@ EsgCapacityPage
 └── EsgCapacityGeoMap(filters)              — badge "04"; dual BinaryToggle (Headcount/SL% metric × Region/Sub-region view,
                                                replacing the earlier curated-14-country view)
 
-No RCA/CLCA sidebar — not specified in this page's mockups.
+EsgCapacityRcaClcaPanel (2026-07-03) — sticky sidebar (position: sticky) alongside the 4 layers above,
+                  starting at the "Analysis Layers" divider — same layout as ForecastingPage's
+                  RcaClcaPanel/HesForecastingPage's HesRcaClcaPanel, own illustrative content written
+                  for this page's staffing/utilization/SL/attrition/cases-per-FTE metrics
 ```
 
 ### HesCapacityPage
@@ -616,9 +621,14 @@ utilizationByQueue(filters, topN=6)        — queue-axis ranking, sorted by |ut
                                               now carries `auxes` (3 distinct Aux codes) instead of a single auxCulprit
 leavesByQueue(filters, topN=6)             — queue-axis ranking: top-N by |leavesDelta| descending, then re-sorted ascending by
                                               delta for display (see design_choice.md for the bug this fixes)
-capacityCardData(filters, granularity)     — {staffing, utilization, sl, totalFte, attrition}, each carrying
-                                              {value/actual, period, prevPeriod, yoyPct} — headline value drills with
-                                              granularity, yoyPct is always FY-over-FY (same split as hesCardData)
+cpfByFY(filters, granularity)              — {period, actual, plan} — Cases per FTE card (rate-preserving expansion,
+                                              replaced Total FTE 2026-07-03)
+capacityCardData(filters, granularity)     — {staffing, utilization, sl, casesPerFte, attrition}. staffing/utilization/
+                                              sl/attrition each carry {value/actual, period, prevPeriod, yoyPct} —
+                                              headline value drills with granularity, yoyPct is always FY-over-FY (same
+                                              split as hesCardData). casesPerFte carries only {actual, plan, period} —
+                                              no prevPeriod/yoyPct, since its card is YTD-only by design (no comparison
+                                              shown, see design_choice.md)
 GEO_CAPACITY_BY_REGION / geoCapacityByRegion(filters) — {region, fulfillmentPct, slPct}
 GEO_CAPACITY_BY_SUBREGION / geoCapacityBySubRegion(filters, metric) — {subRegion, value} × 24 real SUB_REGIONS values,
   replacing the earlier curated-14-country geoCapacityByCountry/COUNTRY_TO_WORLD_ATLAS_NAME machinery entirely
@@ -712,3 +722,4 @@ Steps:
 16. The landing page, Capacity Plan pages, and per-business sub-toggle (2026-07-03) weren't visually clicked through in a rendered browser by the agent — no browser-automation tool available this session; verified via clean production build + Node data smoke tests only
 17. ESG Capacity's Region/Sub-region drill (Attrition, Plan over Plan Variation) scales one FY-level baseline by each key's share of in-scope queues (`shareByKey`) — not a real per-region/sub-region historical dataset
 18. The 2026-07-03 ESG Capacity revision pass (filters, YTD cards, Attrition/Plan-over-Plan drill, Utilization aux detail, Geo Map sub-region toggle) was verified via an extended Node smoke test + clean build only, same browser-automation gap as item 16
+19. ESG Capacity's Cases per FTE card carries no `prevPeriod`/`yoyPct` in `capacityCardData` (unlike every other card) — this is intentional, not a partial implementation, since the card is YTD-only by design

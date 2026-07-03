@@ -539,6 +539,26 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## ESG Capacity Plan: Cases per FTE Card + RCA/CLCA Sidebar (2026-07-03)
+
+### Total FTE → Cases per FTE, not an additional 6th card
+**Decision:** The "Total FTE" card was replaced outright by "Cases per FTE" rather than adding Cases per FTE as a new sixth card.
+**Why:** Requested directly ("Change the Total FTE card to Cases per FTE"), read as a swap, not an addition — the 5-card row layout stays intact and Total FTE's underlying headcount data is still fully visible elsewhere on the page (HeadcountLayer's "Actual vs Plan Variation" visual), so nothing was actually lost by dropping its own dedicated card.
+
+### Cases per FTE: YTD-only, the one card without a YoY comparison
+**Decision:** `ytdSub` is bypassed for this one card — its sub-line is a plain `YTD ${period}: ${actual}` string with no `▲/▼ X% vs prevPeriod` suffix and no trend pip, unlike all 4 other cards on this page.
+**Why:** Requested directly ("show the card as YTD only"). Rather than compute a `yoyPct` the UI would just discard, `capacityCardData`'s `casesPerFte` field only carries `{actual, plan, period}` — no `prevPeriod`/`yoyPct` at all, so the data shape itself documents that no comparison is expected here, instead of leaving unused fields that a future reader might assume are wired up somewhere.
+
+### Cases per FTE popup: Actual vs Plan lines, not a single trend
+**Decision:** The drill-down chart plots two lines (Actual, Plan — dashed) instead of one, matching the request literally ("cases per FTE actual and Plan").
+**Why:** Every other single-metric popup on this page's cards (SL%, Attrition) plots one line because there's genuinely one number to show; Cases per FTE explicitly has two (an actual and a plan), so the chart follows the same "one line per real distinct series" rule rather than picking one arbitrarily.
+
+### RCA/CLCA sidebar: same mechanism, page-specific content
+**Decision:** New `EsgCapacityRcaClcaPanel.jsx`, wired into `EsgCapacityPage.jsx` with the identical sticky-sidebar-next-to-Analysis-Layers layout as `RcaClcaPanel`/`HesRcaClcaPanel`, with its own illustrative findings written in this page's vocabulary (staffing, utilization, SL%, attrition, Cases per FTE) instead of reusing either Forecasting page's copy.
+**Why:** Requested directly ("add a RCA and RLCA section as we did for ESG Forecasting") — "as we did" was read as *same mechanism and layout*, not *same words*, consistent with the identical precedent already established when HES Forecasting got its own RCA/CLCA sidebar (see "HES-specific RCA/CLCA sidebar content" above). ESG Capacity Plan didn't have this sidebar originally because the mockups it was built from never showed one; adding it now is a direct, explicit request rather than a gap being filled in retroactively.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |

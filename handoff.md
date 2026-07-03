@@ -1,5 +1,13 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## ESG Capacity Plan: Cases per FTE Card + RCA/CLCA Sidebar (2026-07-03)
+
+- **"Total FTE" card replaced with "Cases per FTE."** New icon (📋), value is the latest in-scope FY's actual cases-per-FTE figure. New `CPF_BY_FY` baseline + `cpfByFY(filters, granularity)` selector in `esgCapacityData.js` (rate-preserving expansion, same reasoning as UCR target/current). `capacityCardData` dropped `totalFte` entirely and added `casesPerFte: {actual, plan, period}`.
+- **This card shows YTD only** — its sub-line reads `YTD FY27: 16.8`, with no YoY comparison or trend pip, unlike every other card on this page (a deliberate one-card exception to the `ytdSub` pattern, per direct request).
+- **Its popup shows Actual vs Plan** as two lines (new `CasesPerFteTrendChart`), not a single-metric trend — per "when pop-up opens it should show cases per FTE actual and Plan."
+- **New RCA & CLCA sidebar** (`EsgCapacityRcaClcaPanel.jsx`) — sticky right-hand column alongside the 4 analysis layers, same layout mechanism (starts at the "Analysis Layers" divider, KPI cards stay full-width) as ESG Forecasting's `RcaClcaPanel`/HES Forecasting's `HesRcaClcaPanel`. Content is illustrative and written specifically for this page's own metrics (staffing/utilization/SL/attrition/cases-per-FTE vocabulary), not a copy of either Forecasting page's copy, per the standing convention.
+- **Verified**: Node smoke test confirming `casesPerFte` is present/numeric at all 4 granularities and `totalFte` no longer appears in card data; `npm run build` clean (1177 modules); grep sweep confirmed no stray `totalFte`/`'fte'` references remain in the ESG Capacity component tree.
+
 ## ESG Capacity Plan: Filters, Cards, Attrition/Plan-over-Plan Drill, Aux Detail (2026-07-03)
 
 A detailed revision pass on the ESG Capacity Plan page only (HES Capacity, both Forecasting pages, and the landing page are unaffected):
@@ -280,6 +288,7 @@ These are in the original SPOG_views.pptx but not yet implemented:
 14. HES Capacity's Sankey diagram (`workloadSankey()`) uses an illustrative 3-tier CQN taxonomy (`CQN-Standard`/`CQN-Critical`/`CQN-Enterprise`) as flow sources, since this page's filter set has no real per-queue dimension of its own — only the 4 target LOB names are real.
 15. ESG Capacity's Region/Sub-region drill (Attrition, Plan over Plan Variation) scales a single FY-level baseline by each key's share of currently-in-scope queues — same "illustrative structure" convention as everywhere else, not a real per-region/sub-region historical dataset.
 16. The 2026-07-03 ESG Capacity revision pass (filters, cards, Attrition/Plan-over-Plan drill, Utilization aux detail, Geo Map sub-region toggle) was verified via a Node smoke test + clean build, not a rendered-browser click-through — same standing browser-automation gap as every other UI change this session.
+17. ESG Capacity's Cases per FTE card (2026-07-03) intentionally has no YoY comparison/trend pip, unlike every other card on both Capacity pages — this is a deliberate one-off exception, not an oversight, if it looks inconsistent at a glance.
 
 ---
 

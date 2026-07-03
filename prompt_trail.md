@@ -265,3 +265,16 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Verified with `npm run build` (clean, 1176 modules) and a full grep sweep confirming no stale `businessOrg`/`COUNTRIES`/`CAPACITY_PLAN_NAMES`/`geoCapacityByCountry` references remained anywhere in the ESG Capacity component tree or data module
 - Restarted the dev server and reopened it in the user's browser for manual verification (no browser-automation tool available this session)
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
+## Prompt 18 — 2026-07-03
+**Input:** "Change the Total FTE card to Cases per FTE - and show the card as YTD only and when pop-up opens it should show - cases per FTE actual and Plan. Also add a RCA and RLCA section as we did for ESG Forecasting."
+
+**Action:**
+- `esgCapacityData.js`: added `CPF_BY_FY` baseline + `cpfByFY(filters, granularity)` (rate-preserving expansion); `capacityCardData` dropped `totalFte` entirely and added `casesPerFte: {actual, plan, period}` — deliberately no `prevPeriod`/`yoyPct`, since this card shows YTD only
+- `EsgCapacityMetricCards.jsx`: replaced the Total FTE card with Cases per FTE (new icon, `YTD <period>: <value>` sub-line with no comparison/trend pip — a one-off exception to the `ytdSub` pattern used by the other 4 cards); added a new `CasesPerFteTrendChart` (Actual + Plan dashed lines) for the popup, replacing the old `fte` modal type
+- Built `EsgCapacityRcaClcaPanel.jsx` — same sticky-sidebar-next-to-Analysis-Layers mechanism as `RcaClcaPanel`/`HesRcaClcaPanel`, with its own illustrative content written in this page's vocabulary (staffing/utilization/SL/attrition/Cases-per-FTE), not copied from either Forecasting page; wired into `EsgCapacityPage.jsx` with the identical flex layout `HesForecastingPage.jsx` uses
+- Node-smoke-tested `capacityCardData`/`cpfByFY` (casesPerFte present and numeric at all 4 granularities, `totalFte` confirmed removed); ran `npm run build` (clean, 1177 modules); grepped the ESG Capacity component tree to confirm no stray `totalFte`/`'fte'` references remained
+- Restarted the dev server and reopened it in the user's browser for manual verification (no browser-automation tool available this session)
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`

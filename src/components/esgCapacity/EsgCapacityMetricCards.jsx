@@ -4,7 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import {
-  capacityCardData, hcStaffingByFY, utilizationByFY, slTrendByFY, attritionByFY,
+  capacityCardData, hcStaffingByFY, utilizationByFY, slTrendByFY, attritionByFY, cpfByFY,
 } from '../../data/esgCapacityData'
 import { C, Tip } from '../ChartKit'
 import { Modal } from '../Modal'
@@ -103,6 +103,28 @@ function SlTrendChart({ filters, granularity }) {
   )
 }
 
+// Actual vs Plan lines, per the request that the popup "should show cases per FTE
+// actual and Plan" — line-only, matching the "single-metric-family over time"
+// convention already used for SL%/CPASU's own card popups.
+function CasesPerFteTrendChart({ filters, granularity }) {
+  const data = useMemo(() => cpfByFY(filters, granularity), [filters, granularity])
+  return (
+    <div style={CHART_BOX}>
+      <ResponsiveContainer width="100%" height={210}>
+        <LineChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
+          <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
+          <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
+          <Line type="monotone" dataKey="actual" name="Actual" stroke={C.metric1} strokeWidth={2.5} dot={{ r: 3, fill: C.metric1, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+          <Line type="monotone" dataKey="plan" name="Plan" stroke={C.metric2} strokeWidth={2} strokeDasharray="4 3" dot={{ r: 3, fill: C.metric2, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 function AttritionTrendChart({ filters, granularity }) {
   const data = useMemo(() => attritionByFY(filters, granularity), [filters, granularity])
   return (
@@ -127,7 +149,7 @@ const MODAL_TITLES = {
   staffing: 'Actual vs Planned Headcount',
   utilization: 'Utilization — Actual vs Target',
   sl: 'Service Level % Trend',
-  fte: 'Total FTE — Actual vs Plan',
+  casesPerFte: 'Cases per FTE — Actual vs Plan',
   attrition: 'Headcount & Attrition Trend',
 }
 
@@ -152,7 +174,7 @@ function DrillDownModal({ type, filters, granularity, onClose }) {
       {type === 'staffing' && <StaffingTrendChart filters={filters} granularity={granularity} />}
       {type === 'utilization' && <UtilizationTrendChart filters={filters} granularity={granularity} />}
       {type === 'sl' && <SlTrendChart filters={filters} granularity={granularity} />}
-      {type === 'fte' && <StaffingTrendChart filters={filters} granularity={granularity} />}
+      {type === 'casesPerFte' && <CasesPerFteTrendChart filters={filters} granularity={granularity} />}
       {type === 'attrition' && <AttritionTrendChart filters={filters} granularity={granularity} />}
     </Modal>
   )
@@ -166,8 +188,10 @@ export default function EsgCapacityMetricCards({ filters, granularity }) {
   const staffingYtd = ytdSub(d.staffing, `${d.staffing.value}%`)
   const utilizationYtd = ytdSub(d.utilization, `${d.utilization.actual}%`)
   const slYtd = ytdSub(d.sl, `${d.sl.actual}%`)
-  const fteYtd = ytdSub(d.totalFte, d.totalFte.actual.toLocaleString(), { lowerIsBetter: true })
   const attritionYtd = ytdSub(d.attrition, `${d.attrition.actual}%`, { lowerIsBetter: true })
+  // Cases per FTE shows YTD only, no YoY comparison/trend pip — a deliberate
+  // exception to ytdSub's comparison message, per direct request.
+  const casesPerFteSub = `YTD ${d.casesPerFte.period}: ${d.casesPerFte.actual}`
 
   return (
     <div style={{ padding: '0 16px 12px' }}>
@@ -184,10 +208,10 @@ export default function EsgCapacityMetricCards({ filters, granularity }) {
           value={`${d.sl.actual}%`}
           sub={slYtd.text} trend={slYtd.trend}
           onClick={() => toggle('sl')} active={active === 'sl'} />
-        <Card icon="🧑‍💼" label="Total FTE"
-          value={d.totalFte.actual.toLocaleString()}
-          sub={fteYtd.text} trend={fteYtd.trend}
-          onClick={() => toggle('fte')} active={active === 'fte'} />
+        <Card icon="📋" label="Cases per FTE"
+          value={d.casesPerFte.actual}
+          sub={casesPerFteSub}
+          onClick={() => toggle('casesPerFte')} active={active === 'casesPerFte'} />
         <Card icon="↩" label="Attrition %"
           value={`${d.attrition.actual}%`}
           sub={attritionYtd.text} trend={attritionYtd.trend}
