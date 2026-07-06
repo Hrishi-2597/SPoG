@@ -1,5 +1,10 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## RCA/CLCA Sidebar Compacted + HES ACT Trend Adherence Line Removed (2026-07-06)
+
+- **RCA/CLCA sidebar narrowed from 300px to 220px** on all 4 business pages (`ForecastingPage.jsx`, `HesForecastingPage.jsx`, `EsgCapacityPage.jsx`, `HesCapacityPage.jsx`) — the sidebar's fixed width was squeezing the 3-visual-per-row Analysis Layers into a cramped remaining space, most visibly on HES Capacity's Workload Distribution layer (Sankey + 2 charts). All 4 pages' RCA/CLCA panel content (`RcaClcaPanel.jsx`, `HesRcaClcaPanel.jsx`, `EsgCapacityRcaClcaPanel.jsx`, `HesCapacityRcaClcaPanel.jsx`) had their shared `Section` component's type/padding/spacing scaled down to match (badge 9→8px, title 11.5→10px, subtitle 9.5→8.5px, list items 11→9.5px with tighter line-height and gaps) so the narrower column doesn't itself feel cramped.
+- **Removed the Adherence % line from HES Capacity's "ACT Trend — Actual vs Plan"** (`WorkloadDistributionLayer.jsx` Visual3) — its right-hand axis was dropped along with it. "Average Case Time Variance" (Visual2) still carries its own Adherence % line; only the chart literally titled "ACT Trend" had it removed, per the request's specific wording ("the ACT graph").
+
 ## Header "Live" Badge: FY26 → FY27 (2026-07-06)
 
 - The header's "Live · FY26" indicator (`App.jsx`) is shared markup rendered once above every page (landing + all 4 business pages), so updating the single hardcoded string to "Live · FY27" fixed it everywhere in one edit — verified via grep that no other file has a "Live · FYxx" occurrence to keep in sync.

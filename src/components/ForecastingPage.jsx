@@ -53,7 +53,7 @@ export default function ForecastingPage() {
           </div>
         </div>
 
-        <div style={{ width: 300, flexShrink: 0, position: 'sticky', top: 14, marginTop: 14 }}>
+        <div style={{ width: 220, flexShrink: 0, position: 'sticky', top: 14, marginTop: 14 }}>
           <RcaClcaPanel />
         </div>
       </div>

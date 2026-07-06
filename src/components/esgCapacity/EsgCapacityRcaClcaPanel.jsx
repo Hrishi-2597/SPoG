@@ -19,21 +19,23 @@ const CLCA = [
   'For queues over headcount plan but still below 90% SL, prioritize a skill-mix/routing review ahead of any further headcount ask — the data says the fix isn\'t more heads.',
 ]
 
+// Compacted 2026-07-06 to fit the narrower (220px) sidebar without cramping the
+// main chart area — smaller type, tighter line-height/gaps, less padding.
 function Section({ badge, badgeColor, title, subtitle, items }) {
   return (
-    <div className="chart-panel" style={{ padding: '12px 14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+    <div className="chart-panel" style={{ padding: '9px 10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
         <span style={{
-          fontSize: 9, fontWeight: 700, color: '#070f1a', background: badgeColor,
-          borderRadius: 4, padding: '2px 6px', letterSpacing: '0.03em',
+          fontSize: 8, fontWeight: 700, color: '#070f1a', background: badgeColor,
+          borderRadius: 3, padding: '1.5px 5px', letterSpacing: '0.03em',
         }}>{badge}</span>
-        <p style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</p>
+        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</p>
       </div>
-      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 9 }}>{subtitle}</p>
-      <ul style={{ display: 'flex', flexDirection: 'column', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+      <p style={{ fontSize: 8.5, color: 'var(--text-faint)', marginBottom: 6, lineHeight: 1.3 }}>{subtitle}</p>
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: 5, listStyle: 'none', padding: 0, margin: 0 }}>
         {items.map((text, i) => (
-          <li key={i} style={{ display: 'flex', gap: 7, fontSize: 11, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
-            <span style={{ flexShrink: 0, width: 5, height: 5, borderRadius: '50%', background: badgeColor, marginTop: 5 }} />
+          <li key={i} style={{ display: 'flex', gap: 5, fontSize: 9.5, lineHeight: 1.3, color: 'var(--text-secondary)' }}>
+            <span style={{ flexShrink: 0, width: 4, height: 4, borderRadius: '50%', background: badgeColor, marginTop: 4 }} />
             {text}
           </li>
         ))}
@@ -45,7 +47,7 @@ function Section({ badge, badgeColor, title, subtitle, items }) {
 export default function EsgCapacityRcaClcaPanel() {
   return (
     <div className="flex flex-col gap-3">
-      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>
+      <p style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>
         RCA &amp; CLCA
       </p>
       <Section

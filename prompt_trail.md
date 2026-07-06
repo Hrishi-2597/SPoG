@@ -306,3 +306,14 @@ Chronological log of every user prompt and the corresponding actions taken.
 **Action:**
 - Grepped for "Live · FY26" and found a single occurrence in `App.jsx`'s header — shared markup rendered once above every page (landing + all 4 business pages), so a one-line edit to "Live · FY27" applied everywhere without touching each page individually
 - Ran `npm run build` (clean) to confirm; updated `handoff.md`; committed and pushed to `main`
+
+---
+
+## Prompt 21 — 2026-07-06
+**Input:** Screenshot of HES Capacity's Workload Distribution layer showing the 3-visual row badly cramped, with the request "make the RCA and CLCA section small for all the pages... you can reduce the size of lines." Mid-task, a follow-up message: "Also remove the adherence line from the ACT graph for HES Capacity planning."
+
+**Action:**
+- Narrowed the RCA/CLCA sidebar from `width: 300` to `width: 220` in all 4 page files (`ForecastingPage.jsx`, `HesForecastingPage.jsx`, `EsgCapacityPage.jsx`, `HesCapacityPage.jsx`) — freeing up width for the main 3-visual-per-row chart area
+- Compacted the shared `Section` component in all 4 RCA/CLCA panel files to match the narrower column (smaller badge/title/subtitle/list-item type, tighter line-height and gaps, reduced padding); also shrank the "RCA & CLCA" header label
+- Removed the Adherence % line (and its now-unused right axis) from HES Capacity's "ACT Trend — Actual vs Plan" (`WorkloadDistributionLayer.jsx` Visual3) — read "the ACT graph" as the one chart literally titled "ACT Trend," leaving "Average Case Time Variance" (Visual2, same underlying metric) with its own Adherence % line untouched
+- Ran `npm run build` (clean) to confirm both changes; updated `handoff.md`; committed and pushed to `main`

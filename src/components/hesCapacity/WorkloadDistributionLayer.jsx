@@ -116,8 +116,8 @@ function Visual2({ filters, granularity }) {
   )
 }
 
-// Kept as a trend line (vs Visual2's bars) but now carries the same adherence line
-// and defaulter list, per "make this graph similar to Average Case Time Variance."
+// Kept as a trend line (vs Visual2's bars) with the defaulter list; the Adherence %
+// line was removed 2026-07-06 per direct request — Visual2 still carries it.
 function Visual3({ filters, granularity }) {
   const data = useMemo(() => actHrsByFY(filters, granularity), [filters, granularity])
   return (
@@ -126,13 +126,11 @@ function Visual3({ filters, granularity }) {
         <LineChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
           <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis yAxisId="l" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}h`} />
-          <YAxis yAxisId="r" orientation="right" tick={{ fill: C.trend, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
+          <YAxis tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}h`} />
           <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
           <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
-          <Line yAxisId="l" type="monotone" dataKey="actual" name="ACT Actual (hrs)" stroke={C.behind} strokeWidth={2.5} dot={{ r: 3, fill: C.behind, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-          <Line yAxisId="l" type="monotone" dataKey="plan" name="ACT Plan (hrs)" stroke={C.metric2} strokeWidth={2} strokeDasharray="4 3" dot={{ r: 3, fill: C.metric2, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-          <Line yAxisId="r" type="monotone" dataKey="adherence" name="Adherence %" stroke={C.trend} strokeWidth={2} dot={{ r: 3, fill: C.trend, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+          <Line type="monotone" dataKey="actual" name="ACT Actual (hrs)" stroke={C.behind} strokeWidth={2.5} dot={{ r: 3, fill: C.behind, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+          <Line type="monotone" dataKey="plan" name="ACT Plan (hrs)" stroke={C.metric2} strokeWidth={2} strokeDasharray="4 3" dot={{ r: 3, fill: C.metric2, strokeWidth: 0 }} activeDot={{ r: 5 }} />
         </LineChart>
       </ResponsiveContainer>
       <DefaulterLobList filters={filters} />
