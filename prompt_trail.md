@@ -351,3 +351,13 @@ Chronological log of every user prompt and the corresponding actions taken.
 - `MetricCards.jsx`'s `VolumeByFYChart` (Call Volume card's drill-down chart): replaced the `handledPct` line with `abandonPct = (offered - handled) / offered * 100`, renamed to "Abandon %"; kept the same axis/color role since it's still a neutral supplementary rate line, not a variance metric
 - Left the Call Volume card's own face text untouched (still shows handled volume + handle rate) since the request specifically named "a line," i.e. the drill-down chart
 - Verified with `npm run build` (clean); updated `handoff.md`; committed and pushed to `main`
+
+---
+
+## Prompt 25 — 2026-07-08
+**Input:** Screenshot of the Call Volume card's default face ("177.2K handled · 94.1%") with the request "on the default view replace handled % with abandoned %"
+
+**Action:**
+- `mockData.js`'s `cardData()`: added `abandonPct` to `callVolume` alongside the existing `handlePct` (computed directly as `(offered-handled)/offered*100`, not derived from `handlePct`, so it stays independently correct)
+- `MetricCards.jsx`'s Call Volume `Card`: sub-text changed from `"{handled} handled · {handlePct}%"` to `"{handled} handled · {abandonPct}% abandoned"`; the green/red trend threshold reframed from `handlePct >= 90` to the numerically equivalent `abandonPct <= 10`, so status coloring behavior is unchanged
+- Verified with `npm run build` (clean); updated `handoff.md`; committed and pushed to `main`

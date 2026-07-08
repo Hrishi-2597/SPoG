@@ -384,7 +384,11 @@ export function cardData(filters = {}) {
 
   return {
     totalQueues: { active: activeCount, inactive: INACTIVE_QUEUE_NAMES.length },
-    callVolume: { offered, handled, handlePct: offered ? +((handled / offered) * 100).toFixed(1) : 0 },
+    callVolume: {
+      offered, handled,
+      handlePct: offered ? +((handled / offered) * 100).toFixed(1) : 0,
+      abandonPct: offered ? +(((offered - handled) / offered) * 100).toFixed(1) : 0,
+    },
     dbOspSplit: { db: dbPct, osp: ospPct, dbVol: Math.round(offered * dbPct / 100), ospVol: Math.round(offered * ospPct / 100) },
     forecastAccuracy: { value: avgAccuracy, target: 90 },
     cqnVariance: { withinRange, total: activeCount, pct: activeCount ? +((withinRange / activeCount) * 100).toFixed(1) : 0 },

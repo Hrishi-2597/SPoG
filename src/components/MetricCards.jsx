@@ -510,8 +510,8 @@ export default function MetricCards({ filters, granularity }) {
         <Card id="volume"
           icon="📞" label="Call Volume" sublabel="Offered & Handled"
           value={fmt(d.callVolume.offered)}
-          sub={`${fmt(d.callVolume.handled)} handled · ${d.callVolume.handlePct}%`}
-          trend={d.callVolume.handlePct >= 90}
+          sub={`${fmt(d.callVolume.handled)} handled · ${d.callVolume.abandonPct}% abandoned`}
+          trend={d.callVolume.abandonPct <= 10}
           onClick={() => toggle('volume')} active={active === 'volume'}
         />
         <Card id="dbOsp"

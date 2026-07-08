@@ -1,8 +1,9 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
-## Call Volume Drill-Down: Handled % Line Replaced With Abandon % (2026-07-08)
+## Call Volume Card Face + Drill-Down: Handled % Replaced With Abandon % Everywhere (2026-07-08)
 
-- `MetricCards.jsx`'s `VolumeByFYChart` (the Call Volume card's popup) now plots **Abandon %** — `(offered - handled) / offered * 100` — instead of Handled %, on the same second axis/line role. The Call Volume card's own face text (`"{handled} handled · {handlePct}%"`) is unchanged; only the drill-down chart's line was in scope, per the request.
+- `MetricCards.jsx`'s `VolumeByFYChart` (the Call Volume card's popup) plots **Abandon %** — `(offered - handled) / offered * 100` — instead of Handled %, on the same second axis/line role.
+- **Follow-up the same day**: the card's own default-view face text ("177.2K handled · 94.1%") also switched from Handled % to Abandon % ("177.2K handled · 5.9% abandoned"). `cardData()`'s `callVolume` now carries both `handlePct` and `abandonPct` (the latter is just `100 - handlePct`, computed directly rather than derived, so it stays correct if the underlying formula ever changes independently). The card's green/red status threshold was reframed from `handlePct >= 90` to the equivalent `abandonPct <= 10` — same behavior, expressed in the metric now shown.
 
 ## Fix: Business Partner Breakdown Hover Tooltip Was Clipped (2026-07-08)
 
