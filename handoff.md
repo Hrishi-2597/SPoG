@@ -1,5 +1,14 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## ESG Forecasting: Total Queues Drill-Down Now Shows Active + Inactive + BP Breakdown (2026-07-08)
+
+- **New `INACTIVE_QUEUES` fact table** (`mockData.js`) — the 146 inactive queue names, previously just a flat list with no attributes, are now tagged with `region` (same `inferRegion()` regex as `ACTIVE_QUEUES`) and `businessPartner` (round-robin over the real `BUSINESS_PARTNERS` list) — same "real names + illustrative structure" convention as everywhere else in this app.
+- **Region donut now shows both active and inactive queues.** A new All/Active/Inactive segmented pill (reusing the `.drill-toggle` pattern) sits above it; whichever view is selected drives the pie itself, but the big center number is now always followed by an "X active · Y inactive" line, and every slice's hover tooltip shows that region's Active/Inactive split too — so both are visible regardless of which view is toggled on.
+- **The queue table below the donut now lists both active and inactive queues** (region-filtered by the donut, like before), with a new Status badge column; inactive rows show "—" for Accuracy since that concept doesn't exist for them.
+- **New "Business Partner Breakdown" table** underneath — one row per Business Partner with Active / Inactive / Total columns. **Hovering the Active or Inactive count shows a popup listing the actual queue names** behind that number (new `HoverCount` component, styled like every other hover tooltip in the app).
+- New selectors in `mockData.js`: `allQueuesByStatus(filters)` (combined active+inactive rows tagged with `status`, narrowed by region/businessPartner — the two dimensions the inactive roster actually carries) and `queuesByBusinessPartner(filters)` (per-BP active/inactive counts + the queue-name arrays behind each count).
+- **Verified**: Node smoke test confirming the inactive roster's tagging, that `allQueuesByStatus` correctly narrows both rosters by region/businessPartner, and that the BP breakdown's active/inactive counts and name arrays sum back to the full roster; `npm run build` clean.
+
 ## RCA/CLCA Sidebar Compacted + HES ACT Trend Adherence Line Removed (2026-07-06)
 
 - **RCA/CLCA sidebar narrowed from 300px to 220px** on all 4 business pages (`ForecastingPage.jsx`, `HesForecastingPage.jsx`, `EsgCapacityPage.jsx`, `HesCapacityPage.jsx`) — the sidebar's fixed width was squeezing the 3-visual-per-row Analysis Layers into a cramped remaining space, most visibly on HES Capacity's Workload Distribution layer (Sankey + 2 charts). All 4 pages' RCA/CLCA panel content (`RcaClcaPanel.jsx`, `HesRcaClcaPanel.jsx`, `EsgCapacityRcaClcaPanel.jsx`, `HesCapacityRcaClcaPanel.jsx`) had their shared `Section` component's type/padding/spacing scaled down to match (badge 9→8px, title 11.5→10px, subtitle 9.5→8.5px, list items 11→9.5px with tighter line-height and gaps) so the narrower column doesn't itself feel cramped.
@@ -256,7 +265,7 @@ Each card's pop-up went from a raw table to an actual chart matching what the ca
 
 | Card | Drill-down now shows |
 |---|---|
-| Total Queues | Region breakdown donut chart on top (click a slice, or its legend entry, to filter the table below to just that region's queues; click again, or "Clear", to reset) |
+| Total Queues | **Updated 2026-07-08**: All/Active/Inactive toggle + region breakdown donut (both active and inactive counts always shown, per-region and overall) on top; click a slice/legend entry to filter the queue table below (now spanning both rosters, with a Status column); a new Business Partner Breakdown table underneath, with active/inactive counts per BP that reveal their queue names on hover |
 | Call Volume | Bar chart: Offered vs Handled, by Fiscal Year (raw numbers, no %) |
 | DB / OSP Split | Bar chart: DB Offered vs OSP Offered, by Fiscal Year — deliberately ignores the ambient DB/OSP filter (showing the split IS the point; collapsing to one bar when the filter is "DB" would defeat it) |
 | Forecast Accuracy | Bar+line chart: Actual vs Forecast volume per region (APJ/EMEA/Global/LATAM/NAMER), with a Forecast Accuracy % line on a second axis |
@@ -314,6 +323,8 @@ These are in the original SPOG_views.pptx but not yet implemented:
 18. HES Capacity's Region/Sub-region drills (Attrition, Plan over Plan Variation) and Geo Map sub-region view are all illustrative — `subRegion` on `HES_CAPACITY_LOBS` is a round-robin tag over the real `SUB_REGIONS` list, not a real per-LOB business mapping, same "real names + illustrative structure" convention as everywhere else.
 19. HES Capacity's Workload Distribution Visual2/Visual3 (2026-07-03) both now plot the identical Average Case Time metric (one as bars, one as a line) per direct request — this redundancy is intentional, not a mistake, since the original "Workload Act vs Plan" name was itself a garbled reference to "Average Case Time" all along.
 20. The 2026-07-03 HES Capacity revision pass (filters, YTD cards, Attrition/Plan-over-Plan drill, Sankey LOB/CQN toggle, Workload ACT rework, Geo Map sub-region toggle, RCA/CLCA sidebar) was verified via an extended Node smoke test + clean build only — same standing browser-automation gap as every other UI change this session.
+21. `INACTIVE_QUEUES`' region/businessPartner tags (2026-07-08) are illustrative round-robin assignments, not a real business mapping — same caveat as `ACTIVE_QUEUES`'s own tags, which this mirrors. `allQueuesByStatus`/`queuesByBusinessPartner` only honor the Region/Business Partner filters (the two dimensions the inactive roster has); the Total Queues drill-down's other filter dimensions (Capacity Code, Channel, Sub-region, L5 Manager) only narrow the active side, same reasoning as the existing DB/OSP exemption for this card.
+22. The Total Queues drill-down rework (2026-07-08) was verified via a Node smoke test on the new selectors + a clean build, not a rendered-browser click-through — same standing browser-automation gap as every other UI change this session.
 
 ---
 

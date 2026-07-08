@@ -4,8 +4,8 @@ import {
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
 import {
-  cardData, filterQueues, callVolumeByFY, dbOspVolumeByFY, forecastAccuracyByRegion,
-  CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY,
+  cardData, callVolumeByFY, dbOspVolumeByFY, forecastAccuracyByRegion,
+  CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY, allQueuesByStatus, queuesByBusinessPartner,
 } from '../data/mockData'
 import { Modal } from './Modal'
 
@@ -94,7 +94,13 @@ const Tip = ({ active, payload, label }) => {
   )
 }
 
-function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
+// Region donut now plots whichever status view is selected (All/Active/Inactive),
+// but always shows the Active/Inactive split underneath the big number and in each
+// slice's tooltip — regardless of which view is active — so "both" is always visible,
+// not hidden behind the toggle. `allRows` (unfiltered by statusView) is what the
+// breakdown numbers are computed from; `rows` (statusView-filtered) is what the pie
+// itself plots.
+function QueuesByRegionChart({ rows, allRows, selectedRegion, onSelectRegion }) {
   const data = useMemo(() => {
     const counts = {}
     rows.forEach(q => { counts[q.region] = (counts[q.region] || 0) + 1 })
@@ -103,7 +109,20 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
       .sort((a, b) => b.count - a.count)
   }, [rows])
   const total = rows.length
+
+  const regionBreakdown = useMemo(() => {
+    const b = {}
+    allRows.forEach(q => {
+      b[q.region] = b[q.region] || { active: 0, inactive: 0 }
+      b[q.region][q.status === 'Active' ? 'active' : 'inactive']++
+    })
+    return b
+  }, [allRows])
+
   const centerCount = selectedRegion ? (data.find(d => d.region === selectedRegion)?.count ?? 0) : total
+  const centerBreakdown = selectedRegion
+    ? (regionBreakdown[selectedRegion] || { active: 0, inactive: 0 })
+    : Object.values(regionBreakdown).reduce((s, b) => ({ active: s.active + b.active, inactive: s.inactive + b.inactive }), { active: 0, inactive: 0 })
 
   return (
     <div style={{ ...CHART_BOX, position: 'relative' }}>
@@ -113,10 +132,14 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
           <Tooltip content={({ active, payload }) => {
             if (!active || !payload?.length) return null
             const { region, count } = payload[0].payload
+            const bd = regionBreakdown[region] || { active: 0, inactive: 0 }
             return (
               <div className="chart-tooltip">
                 <p style={{ fontSize: 10, fontWeight: 700, color: REGION_COLORS[region] || 'var(--accent)', marginBottom: 3 }}>{region}</p>
                 <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{count} queues <span style={{ color: 'var(--text-faint)' }}>({total ? Math.round(count / total * 100) : 0}%)</span></p>
+                <p style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 3, paddingTop: 3, borderTop: '1px solid var(--border-subtle)' }}>
+                  Active <span style={{ color: '#34d399', fontWeight: 600 }}>{bd.active}</span> · Inactive <span style={{ color: '#f87171', fontWeight: 600 }}>{bd.inactive}</span>
+                </p>
               </div>
             )
           }} />
@@ -135,26 +158,45 @@ function QueuesByRegionChart({ rows, selectedRegion, onSelectRegion }) {
         </PieChart>
       </ResponsiveContainer>
       <div style={{
-        position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)',
+        position: 'absolute', top: '38%', left: '50%', transform: 'translate(-50%, -50%)',
         textAlign: 'center', pointerEvents: 'none',
       }}>
         <p className="num" style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{centerCount}</p>
         <p style={{ fontSize: 9, color: 'var(--text-faint)', marginTop: 2 }}>{selectedRegion || 'Queues'}</p>
+        <p style={{ fontSize: 8.5, color: 'var(--text-faint)', marginTop: 3 }}>
+          <span style={{ color: '#34d399', fontWeight: 600 }}>{centerBreakdown.active}</span> active ·{' '}
+          <span style={{ color: '#f87171', fontWeight: 600 }}>{centerBreakdown.inactive}</span> inactive
+        </p>
       </div>
     </div>
   )
 }
 
-function QueuesSection({ rows }) {
+// Status view (All/Active/Inactive) is a local drill-down control, separate from the
+// page's ambient filters — it narrows what the donut/table show without touching
+// `filters`, same "opening/closing this never touches filter state" principle as the
+// rest of this modal.
+function QueuesSection({ filters }) {
+  const [statusView, setStatusView] = useState('All')
   const [selectedRegion, setSelectedRegion] = useState(null)
-  const filteredRows = selectedRegion ? rows.filter(q => q.region === selectedRegion) : rows
+  const allRows = useMemo(() => allQueuesByStatus(filters), [filters])
+  const statusRows = useMemo(() => statusView === 'All' ? allRows : allRows.filter(q => q.status === statusView), [allRows, statusView])
+  const filteredRows = selectedRegion ? statusRows.filter(q => q.region === selectedRegion) : statusRows
+
   return (
     <>
-      <QueuesByRegionChart rows={rows} selectedRegion={selectedRegion}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+        <div className="drill-toggle">
+          {['All', 'Active', 'Inactive'].map(s => (
+            <button key={s} onClick={() => setStatusView(s)} className={`drill-btn${statusView === s ? ' active' : ''}`}>{s}</button>
+          ))}
+        </div>
+      </div>
+      <QueuesByRegionChart rows={statusRows} allRows={allRows} selectedRegion={selectedRegion}
         onSelectRegion={r => setSelectedRegion(prev => prev === r ? null : r)} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 6px' }}>
         <p style={{ fontSize: 10, color: 'var(--text-faint)' }}>
-          {selectedRegion ? <><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} queues</> : `All regions — ${filteredRows.length} queues`}
+          {selectedRegion ? <><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedRegion}</span> — {filteredRows.length} {statusView.toLowerCase()} queues</> : `${statusView} — ${filteredRows.length} queues`}
         </p>
         {selectedRegion && (
           <button onClick={() => setSelectedRegion(null)} style={{
@@ -164,6 +206,7 @@ function QueuesSection({ rows }) {
         )}
       </div>
       <QueueTable rows={filteredRows} />
+      <BusinessPartnerTable filters={filters} />
     </>
   )
 }
@@ -176,6 +219,7 @@ function QueueTable({ rows }) {
           <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
             <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Queue</th>
             <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Region</th>
+            <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</th>
             <th style={{ textAlign: 'right', padding: '4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Accuracy</th>
           </tr>
         </thead>
@@ -186,14 +230,90 @@ function QueueTable({ rows }) {
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
               <td style={{ padding: '5px 12px 5px 0', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-dim)' }}>{q.name}</td>
               <td style={{ padding: '5px 12px 5px 0', color: 'var(--text-muted)' }}>{q.region}</td>
+              <td style={{ padding: '5px 12px 5px 0' }}>
+                <span className={`badge ${q.status === 'Active' ? 'badge-good' : 'badge-bad'}`}>{q.status}</span>
+              </td>
               <td className="num" style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600,
-                color: q.accuracy >= 90 ? '#34d399' : q.accuracy >= 80 ? '#fbbf24' : '#f87171' }}>
-                {q.accuracy}%
+                color: q.accuracy == null ? 'var(--text-muted)' : q.accuracy >= 90 ? '#34d399' : q.accuracy >= 80 ? '#fbbf24' : '#f87171' }}>
+                {q.accuracy == null ? '—' : `${q.accuracy}%`}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+// A count that reveals the queue names behind it on hover — "when we hover on that
+// number we would be able to see the queue name," per direct request. Native title
+// tooltips don't wrap/scroll well for a long name list, so this uses the same
+// .chart-tooltip styling as every other hover popup in the app instead.
+function HoverCount({ value, names, color }) {
+  const [show, setShow] = useState(false)
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-block' }}
+      onMouseEnter={() => names.length > 0 && setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <span style={{
+        fontWeight: 700, color, cursor: names.length > 0 ? 'pointer' : 'default',
+        textDecoration: names.length > 0 ? 'underline dotted' : 'none', textUnderlineOffset: 3,
+      }}>{value}</span>
+      {show && (
+        <div className="chart-tooltip animate-fade-in" style={{
+          position: 'absolute', bottom: '130%', right: 0, zIndex: 30,
+          width: 230, maxHeight: 190, overflowY: 'auto', textAlign: 'left',
+        }}>
+          {names.map((n, i) => (
+            <p key={i} style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--text-secondary)', padding: '2px 0', whiteSpace: 'nowrap' }}>{n}</p>
+          ))}
+        </div>
+      )}
+    </span>
+  )
+}
+
+// Per-Business-Partner active/inactive split — "a table for BP queues list and a
+// split of active and inactive queues for them," per direct request. Reflects the
+// same ambient `filters` as the region donut above (region/businessPartner only, the
+// two dimensions the inactive roster carries), independent of the donut's own
+// statusView/selectedRegion drill state.
+function BusinessPartnerTable({ filters }) {
+  const rows = useMemo(() => queuesByBusinessPartner(filters), [filters])
+  return (
+    <div style={{ marginTop: 14 }}>
+      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)' }}>Business Partner Breakdown</p>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 8 }}>Hover a count to see the queue names</p>
+      <div style={{ overflowX: 'auto', maxHeight: 220, overflowY: 'auto' }}>
+        <table className="w-full" style={{ fontSize: 11, borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
+              <th style={{ textAlign: 'left', padding: '4px 12px 4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Business Partner</th>
+              <th style={{ textAlign: 'right', padding: '4px 10px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Active</th>
+              <th style={{ textAlign: 'right', padding: '4px 10px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Inactive</th>
+              <th style={{ textAlign: 'right', padding: '4px 0', color: 'var(--text-muted)', fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((bp, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '5px 12px 5px 0', color: 'var(--text-secondary)' }}>{bp.businessPartner}</td>
+                <td className="num" style={{ padding: '5px 10px', textAlign: 'right' }}>
+                  <HoverCount value={bp.active} names={bp.activeNames} color="#34d399" />
+                </td>
+                <td className="num" style={{ padding: '5px 10px', textAlign: 'right' }}>
+                  <HoverCount value={bp.inactive} names={bp.inactiveNames} color="#f87171" />
+                </td>
+                <td className="num" style={{ padding: '5px 0', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>{bp.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -340,7 +460,7 @@ function YearQueueModal({ fy, filters, onClose }) {
 }
 
 const MODAL_TITLES = {
-  queues:   'Active Queue Directory',
+  queues:   'Queue Directory — Active & Inactive',
   volume:   'Offered vs Handled — Fiscal Year',
   dbOsp:    'DB vs OSP Offered Volume',
   forecast: 'Regional Forecast Accuracy',
@@ -350,11 +470,11 @@ const MODAL_TITLES = {
 // Opening/closing a card's popup only touches this component's own `active`
 // state — `filters` keeps flowing from ForecastingPage unchanged, so closing
 // the modal always returns to the dashboard exactly as filtered.
-function DrillDownModal({ type, filters, granularity, rows, onClose }) {
+function DrillDownModal({ type, filters, granularity, onClose }) {
   const [selectedYear, setSelectedYear] = useState(null)
   return (
     <Modal title={MODAL_TITLES[type]} onClose={onClose}>
-      {type === 'queues' && <QueuesSection rows={rows} />}
+      {type === 'queues' && <QueuesSection filters={filters} />}
       {type === 'volume' && <VolumeByFYChart filters={filters} granularity={granularity} />}
       {type === 'dbOsp' && <DbOspByFYChart filters={filters} granularity={granularity} />}
       {type === 'forecast' && <ForecastByRegionChart filters={filters} />}
@@ -368,8 +488,6 @@ function DrillDownModal({ type, filters, granularity, rows, onClose }) {
 export default function MetricCards({ filters, granularity }) {
   const [active, setActive] = useState(null)
   const d = useMemo(() => cardData(filters), [filters])
-  // Total Queues drill-down matches the card's own portfolio scoping (DB/OSP-agnostic).
-  const structuralRows = useMemo(() => filterQueues({ ...filters, dbOsp: 'All' }), [filters])
   const toggle = key => setActive(prev => prev === key ? null : key)
 
   return (
@@ -410,7 +528,7 @@ export default function MetricCards({ filters, granularity }) {
         />
       </div>
 
-      {active && <DrillDownModal type={active} filters={filters} granularity={granularity} rows={structuralRows} onClose={() => setActive(null)} />}
+      {active && <DrillDownModal type={active} filters={filters} granularity={granularity} onClose={() => setActive(null)} />}
     </div>
   )
 }

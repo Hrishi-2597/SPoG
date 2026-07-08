@@ -603,6 +603,30 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## ESG Forecasting: Total Queues Drill-Down — Active + Inactive + Business Partner Breakdown (2026-07-08)
+
+### Tag the inactive roster instead of leaving it structureless
+**Decision:** `INACTIVE_QUEUES` gives each of the 146 inactive names a `region` (via the same `inferRegion()` regex `ACTIVE_QUEUES` already uses) and a `businessPartner` (round-robin over the real `BUSINESS_PARTNERS` list) — attributes it never had before.
+**Why:** The request needed the donut and the new Business Partner table to place inactive queues somewhere real — without at least region and business-partner tags, "show both active and inactive" would have nothing to group inactive queues by. Reusing the exact same tagging mechanism `ACTIVE_QUEUES` already uses (rather than inventing a new one) keeps the "real names + illustrative structure" convention consistent across both rosters.
+
+### A status toggle that doesn't hide the other status
+**Decision:** The All/Active/Inactive pill controls which rows the donut *plots*, but the center label and every slice's tooltip always show the region's Active/Inactive split regardless of which view is selected.
+**Why:** "We need to figure out a way to show both active and inactive queues" reads as a requirement that both numbers stay visible, not that a toggle merely lets you flip between them one at a time (a plain toggle alone would still hide one status at any given moment). Keeping the breakdown always-visible in the center label and tooltip satisfies "show both" directly, while the toggle still gives a way to isolate one status in the donut's own shape for someone who wants that.
+
+### Business Partner Breakdown as a separate table, not folded into the region table
+**Decision:** A new `BusinessPartnerTable` sits below the existing region-filtered queue table, rather than adding a Business Partner column to that table or replacing it.
+**Why:** "A table for BP queues list and a split of active and inactive queues for them" describes a BP-indexed summary (one row per partner, with counts), which is a different shape from the existing queue-indexed table (one row per queue). Keeping both gives two complementary views — "which queues are in this region" and "how is this business partner's portfolio split" — without cramming two different grains of data into one table.
+
+### Hover tooltip for queue names, not a click-to-expand or a native `title` attribute
+**Decision:** `HoverCount` shows a styled `.chart-tooltip` popup listing queue names on `onMouseEnter`, matching every other hover tooltip already in the app, rather than a native HTML `title` attribute or a click-to-expand row.
+**Why:** Requested directly ("when we hover on that number we would be able to see the queue name"). A native `title` tooltip can't scroll or wrap a long name list and looks visually inconsistent with the rest of the dashboard's custom tooltips; reusing the existing `.chart-tooltip` styling (scrollable, monospace queue names, same as the region donut's own tooltip) keeps this new element visually native to the app instead of introducing a new interaction pattern.
+
+### Total Queues drill-down only honors the Region/Business Partner filters for the combined view
+**Decision:** `allQueuesByStatus`/`queuesByBusinessPartner` narrow both rosters by `filters.region`/`filters.businessPartner` only — the other 6 Queue filters (Capacity Code, Channel, Sub-region, L5 Manager, Queue Name, DB/OSP) are silently not applied to this specific view.
+**Why:** The inactive roster only has region and business-partner attributes — applying a Capacity Code filter, for instance, has no inactive-side data to check it against. Rather than either (a) making the whole combined view ignore the ambient filters entirely, or (b) hiding all inactive queues the moment any other filter is touched, honoring the two dimensions both rosters share is the same reasoning already established for this card ("Total Queues... ignores the DB/OSP toggle" — a queue's existence doesn't depend on a filter dimension it doesn't have data for).
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |

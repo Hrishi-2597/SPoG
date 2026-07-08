@@ -301,6 +301,45 @@ export function filterQueues(filters = {}) {
   })
 }
 
+// ── Inactive queue fact table (2026-07-08) ────────────────────────────────────
+// The inactive roster came with no attributes beyond its names, unlike ACTIVE_QUEUES —
+// tagged here with region (same inferRegion() regex) and businessPartner (round-robin
+// over the real BUSINESS_PARTNERS list), same "real names + illustrative structure"
+// convention as everywhere else, so the Total Queues drill-down can show both rosters
+// side by side instead of only the active one.
+export const INACTIVE_QUEUES = INACTIVE_QUEUE_NAMES.map((name, i) => ({
+  name,
+  region: inferRegion(name),
+  businessPartner: BUSINESS_PARTNERS[i % BUSINESS_PARTNERS.length],
+}))
+
+// Combined active+inactive rows tagged with status — narrowed only by region/
+// businessPartner, the two dimensions both rosters actually carry (the other 6 Queue
+// filters only exist on ACTIVE_QUEUES, so they don't apply here, same reasoning as
+// why Total Queues already ignores DB/OSP). Backs the Total Queues drill-down's
+// region donut and Business Partner breakdown table.
+export function allQueuesByStatus(filters = {}) {
+  const inScope = q => matchesMulti(filters.region, q.region) && matchesMulti(filters.businessPartner, q.businessPartner)
+  return [
+    ...ACTIVE_QUEUES.filter(inScope).map(q => ({ name: q.name, region: q.region, businessPartner: q.businessPartner, status: 'Active', accuracy: q.accuracy })),
+    ...INACTIVE_QUEUES.filter(inScope).map(q => ({ name: q.name, region: q.region, businessPartner: q.businessPartner, status: 'Inactive', accuracy: null })),
+  ]
+}
+
+// Per-Business-Partner active/inactive split, plus the actual queue names behind
+// each count so the drill-down can show them on hover — sorted by total descending.
+export function queuesByBusinessPartner(filters = {}) {
+  const rows = allQueuesByStatus(filters)
+  const byBp = {}
+  rows.forEach(q => {
+    if (!byBp[q.businessPartner]) byBp[q.businessPartner] = { businessPartner: q.businessPartner, activeNames: [], inactiveNames: [] }
+    byBp[q.businessPartner][q.status === 'Active' ? 'activeNames' : 'inactiveNames'].push(q.name)
+  })
+  return Object.values(byBp)
+    .map(bp => ({ ...bp, active: bp.activeNames.length, inactive: bp.inactiveNames.length, total: bp.activeNames.length + bp.inactiveNames.length }))
+    .sort((a, b) => b.total - a.total)
+}
+
 // Fiscal Quarter/Week values carry their fiscal year as a prefix (e.g. 'FY26Q2', 'FY26W14').
 // The most specific time filter selected (Week > Quarter > Year) determines which fiscal
 // year(s) the FY-level charts show — spanning multiple years if the selection does.

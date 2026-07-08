@@ -317,3 +317,16 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Compacted the shared `Section` component in all 4 RCA/CLCA panel files to match the narrower column (smaller badge/title/subtitle/list-item type, tighter line-height and gaps, reduced padding); also shrank the "RCA & CLCA" header label
 - Removed the Adherence % line (and its now-unused right axis) from HES Capacity's "ACT Trend — Actual vs Plan" (`WorkloadDistributionLayer.jsx` Visual3) — read "the ACT graph" as the one chart literally titled "ACT Trend," leaving "Average Case Time Variance" (Visual2, same underlying metric) with its own Adherence % line untouched
 - Ran `npm run build` (clean) to confirm both changes; updated `handoff.md`; committed and pushed to `main`
+
+---
+
+## Prompt 22 — 2026-07-08
+**Input:** "For ESG Forecasting tab we have total queues card and a dropdown for it...we need to make it more interactive...right now we are showing only active queues in the donut chart..we need to figure out a way to show both active and inactive queues..and also a table for BP queues list and a split of active and inactive queues for them-and when we hover on that number we would be able to see the queue name."
+
+**Action:**
+- `mockData.js`: added `INACTIVE_QUEUES` (146 inactive queue names tagged with `region`/`businessPartner`, same illustrative-tagging convention as `ACTIVE_QUEUES`); added `allQueuesByStatus(filters)` (combined active+inactive rows tagged with `status`, narrowed by region/businessPartner only) and `queuesByBusinessPartner(filters)` (per-BP active/inactive counts + the queue-name arrays behind each count)
+- Node-smoke-tested both new selectors (tagging present, counts sum back to the full rosters, region/BP filters narrow correctly, BP rows sorted by total) before touching the UI
+- `MetricCards.jsx`: reworked the Total Queues drill-down — `QueuesByRegionChart` now plots whichever of an All/Active/Inactive segmented pill is selected, but always shows the region's Active/Inactive split in the center label and every slice's tooltip regardless of the toggle position; `QueueTable` now lists both rosters with a Status badge column (inactive rows show "—" for Accuracy); added a new `BusinessPartnerTable` below it (Business Partner / Active / Inactive / Total) with a `HoverCount` component that reveals the underlying queue names in a styled tooltip on hover
+- Renamed the modal title from "Active Queue Directory" to "Queue Directory — Active & Inactive"; removed the now-unused `filterQueues`/`structuralRows` plumbing this replaced
+- Ran `npm run build` (clean); started the dev server and opened it in the user's browser for manual verification (no browser-automation tool available this session)
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`

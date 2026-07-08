@@ -397,6 +397,23 @@ effectiveFiscalYears(filters) — Week > Quarter > Year precedence → an array 
   FY strings (all 3 if nothing's selected; can span multiple years if the selection does)
 ```
 
+### Inactive queue fact table + combined active/inactive selectors (2026-07-08)
+```
+INACTIVE_QUEUES — INACTIVE_QUEUE_NAMES.map(...) → Array<{ name, region, businessPartner }>
+  region via the same inferRegion() regex as ACTIVE_QUEUES; businessPartner round-robin
+  over BUSINESS_PARTNERS — the inactive roster came with no attributes beyond names, so
+  these two are illustrative tags, same convention as ACTIVE_QUEUES's own tags
+allQueuesByStatus(filters) — combined ACTIVE_QUEUES + INACTIVE_QUEUES rows, each tagged
+  {status: 'Active'|'Inactive', accuracy: number|null}, narrowed ONLY by region/
+  businessPartner (the two dimensions the inactive roster carries — the other 6 Queue
+  filters only apply to the active side, same reasoning as the existing DB/OSP exemption
+  for this card). Backs the Total Queues drill-down's region donut.
+queuesByBusinessPartner(filters) — per-Business-Partner {businessPartner, active,
+  inactive, total, activeNames[], inactiveNames[]}, sorted by total descending. Backs
+  the drill-down's new Business Partner Breakdown table; the name arrays back the
+  hover-to-see-queue-names tooltip on each count.
+```
+
 ### Cards
 ```
 cardData(filters) → {
