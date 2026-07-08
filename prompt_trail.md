@@ -354,6 +354,17 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 28 — 2026-07-08
+**Input:** "for forecast accuracy dropdown instead of showing region as default..show year wise accuracy as default and when user clicks on a particular year it should open a pop up again to show region wise"
+
+**Action:**
+- `mockData.js`: added `forecastAccuracyByFY(filters)` (FY rollup of the existing `FORECAST_ACCURACY_BY_REGION` baseline, forecast held flat across years with only actual/accuracy nudged per year) and `forecastAccuracyByRegionForYear(filters, fy)` (region breakdown for one year, using the same nudge so both views' totals reconcile); removed the old un-scoped `forecastAccuracyByRegion` once nothing called it anymore
+- Node-smoke-tested both selectors (FY narrowing, region-filter narrowing, and that a year's region-breakdown sums reconcile with that year's FY-rollup row) before touching the UI
+- `MetricCards.jsx`: repurposed `ForecastByRegionChart` to take a `fy` prop (now only reached via drill-in, not the default view); added `ForecastByFYChart` (Actual/Forecast/Accuracy% by fiscal year, click a bar to drill in) as the new default; added `ForecastYearRegionModal`, a nested pop-up mirroring the existing `YearQueueModal`'s custom-overlay pattern, rendering `ForecastByRegionChart` scoped to the clicked year; renamed the modal title to "Forecast Accuracy — Fiscal Year"
+- Verified with `npm run build` (clean) and a grep sweep confirming no stale references to the removed selector remained; updated `handoff.md`; committed and pushed to `main`
+
+---
+
 ## Prompt 27 — 2026-07-08
 **Input:** "also add line chart for DB/OSP instead of column chart"
 

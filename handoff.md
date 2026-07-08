@@ -1,5 +1,12 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## Forecast Accuracy Drill-Down: Year-Wise Default, Click-to-Region Pop-Up (2026-07-08)
+
+- **Default view flipped from region to fiscal year.** `ForecastByFYChart` (Actual/Forecast bars + Accuracy% line, by FY) replaces the old always-region view as the Forecast Accuracy card's default drill-down chart.
+- **Clicking a year's bar opens a new nested pop-up** (`ForecastYearRegionModal`) showing that year's regional breakdown — the same Actual/Forecast/Accuracy% chart shape as before, now scoped to one fiscal year and reached by drilling in, mirroring the CQN Variance card's existing "click a year for detail" pattern in this same file.
+- New selectors in `mockData.js`: `forecastAccuracyByFY(filters)` (FY rollup of the existing region baseline, nudged per year — forecast held flat across years, only actual/accuracy move) and `forecastAccuracyByRegionForYear(filters, fy)` (region breakdown for one year, using the same per-year nudge so the two views' totals reconcile). The old un-scoped `forecastAccuracyByRegion` was removed as dead code once nothing called it anymore.
+- **Verified**: Node smoke test confirming the FY rollup narrows correctly by Fiscal Year/Region filters, and that a given year's region-breakdown totals reconcile with that year's FY-rollup row (forecast sums exactly, actual sums within a rounding tolerance); `npm run build` clean.
+
 ## DB/OSP Split Drill-Down: Column Chart → Line Chart (2026-07-08)
 
 - `MetricCards.jsx`'s `DbOspByFYChart` (DB/OSP Split card's popup) changed from grouped columns to a line chart — same two series (DB Offered / OSP Offered), same colors, now plotted as trend lines.

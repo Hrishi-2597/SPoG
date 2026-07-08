@@ -446,8 +446,37 @@ export const FORECAST_ACCURACY_BY_REGION = REGIONS.map(region => {
   return { region, forecast, actual: Math.round(forecast * accuracy / 100), accuracy }
 })
 
-export function forecastAccuracyByRegion(filters = {}) {
-  return FORECAST_ACCURACY_BY_REGION.filter(d => matchesMulti(filters.region, d.region))
+// Forecast Accuracy card's drill-down default view (2026-07-08): a Fiscal Year rollup
+// of the region baseline above, nudged per year — illustrative until a real per-FY
+// forecast-accuracy dataset exists. forecast (the plan) is held flat across years since
+// nothing else in this mock model varies a forecast baseline by year on its own; only
+// actual/accuracy move, same "one baseline, small deterministic wobble per period"
+// convention used everywhere else in this file.
+const FY_ACCURACY_NUDGE = { FY25: 0.97, FY26: 1.0, FY27: 1.02 }
+
+export function forecastAccuracyByFY(filters = {}) {
+  const years = effectiveFiscalYears(filters)
+  const rows = FORECAST_ACCURACY_BY_REGION.filter(d => matchesMulti(filters.region, d.region))
+  const forecast = rows.reduce((s, r) => s + r.forecast, 0)
+  const actualTotal = rows.reduce((s, r) => s + r.actual, 0)
+  return years.map(fy => {
+    const actual = Math.round(actualTotal * (FY_ACCURACY_NUDGE[fy] ?? 1))
+    return { period: fy, forecast, actual, accuracy: forecast ? +((actual / forecast) * 100).toFixed(1) : 0 }
+  })
+}
+
+// Region breakdown for one clicked fiscal year — applies the same per-year nudge to
+// each region's own baseline, so this stays internally consistent with the FY rollup
+// above (the two views' totals reconcile). Backs the "click a year to see region
+// breakdown" pop-up.
+export function forecastAccuracyByRegionForYear(filters = {}, fy) {
+  const nudge = FY_ACCURACY_NUDGE[fy] ?? 1
+  return FORECAST_ACCURACY_BY_REGION
+    .filter(d => matchesMulti(filters.region, d.region))
+    .map(d => {
+      const actual = Math.round(d.actual * nudge)
+      return { region: d.region, forecast: d.forecast, actual, accuracy: d.forecast ? +((actual / d.forecast) * 100).toFixed(1) : 0 }
+    })
 }
 
 // ── CQN Forecast Variance ─────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
 import {
-  cardData, callVolumeByFY, dbOspVolumeByFY, forecastAccuracyByRegion,
+  cardData, callVolumeByFY, dbOspVolumeByFY, forecastAccuracyByFY, forecastAccuracyByRegionForYear,
   CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY, allQueuesByStatus, queuesByBusinessPartner,
 } from '../data/mockData'
 import { Modal } from './Modal'
@@ -422,8 +422,12 @@ function DbOspByFYChart({ filters, granularity }) {
   )
 }
 
-function ForecastByRegionChart({ filters }) {
-  const data = useMemo(() => forecastAccuracyByRegion(filters), [filters])
+// Region breakdown — now reached by clicking a year in ForecastByFYChart below,
+// rather than being the drill-down's own default view. `fy` selects which year's
+// nudge to apply (forecastAccuracyByRegionForYear), keeping this view internally
+// consistent with whichever year's bar was clicked.
+function ForecastByRegionChart({ filters, fy }) {
+  const data = useMemo(() => forecastAccuracyByRegionForYear(filters, fy), [filters, fy])
   return (
     <div style={CHART_BOX}>
       <ResponsiveContainer width="100%" height={220}>
@@ -442,6 +446,68 @@ function ForecastByRegionChart({ filters }) {
             strokeWidth={2} dot={{ r: 3, fill: C.line, strokeWidth: 0 }} activeDot={{ r: 5 }} />
         </ComposedChart>
       </ResponsiveContainer>
+    </div>
+  )
+}
+
+// New default view (2026-07-08): Fiscal Year rollup, same Actual/Forecast bars +
+// Accuracy% line shape as the region chart above. Clicking a year's bar opens
+// ForecastYearRegionModal with that year's regional breakdown, mirroring the
+// CQN Variance drill-down's own "click a year for detail" pattern in this file.
+function ForecastByFYChart({ filters, onSelectYear }) {
+  const data = useMemo(() => forecastAccuracyByFY(filters), [filters])
+  return (
+    <div style={CHART_BOX}>
+      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 6, textAlign: 'center' }}>Click a year to see that year's regional breakdown</p>
+      <ResponsiveContainer width="100%" height={205}>
+        <ComposedChart data={data} margin={{ top: 4, right: 24, left: 0, bottom: 0 }} {...BAR_GAPS}>
+          <CartesianGrid strokeDasharray="2 4" stroke={C.grid} />
+          <XAxis dataKey="period" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="l" tick={{ fill: C.tick, fontSize: 10 }} axisLine={false} tickLine={false}
+            tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
+          <YAxis yAxisId="r" orientation="right" domain={[0,100]} tick={{ fill: C.line, fontSize: 10 }} axisLine={false} tickLine={false}
+            tickFormatter={v => `${v}%`} />
+          <Tooltip content={<Tip />} cursor={{ fill: 'rgba(56,189,248,0.04)' }} />
+          <Legend wrapperStyle={{ fontSize: 10, color: C.tick, paddingTop: 4 }} />
+          <Bar yAxisId="l" dataKey="actual" name="Actual" fill={C.actual} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54}
+            onClick={d => onSelectYear(d.period)} style={{ cursor: 'pointer' }} />
+          <Bar yAxisId="l" dataKey="forecast" name="Forecast" fill={C.forecast} opacity={0.85} radius={[3,3,0,0]} maxBarSize={54}
+            onClick={d => onSelectYear(d.period)} style={{ cursor: 'pointer' }} />
+          <Line yAxisId="r" type="monotone" dataKey="accuracy" name="Accuracy %" stroke={C.line}
+            strokeWidth={2} dot={{ r: 3, fill: C.line, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// Nested pop-up opened by clicking a year in ForecastByFYChart — same custom fixed-
+// overlay markup as YearQueueModal below (not the shared Modal component, since this
+// is itself already nested inside a Modal).
+function ForecastYearRegionModal({ fy, filters, onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(4,9,15,0.7)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="animate-fade-in"
+        style={{
+          background: 'var(--bg-panel)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10,
+          padding: '16px 18px', width: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(56,189,248,0.08)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <h3 style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{fy} — Regional Forecast Accuracy</h3>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+        </div>
+        <p style={{ fontSize: 10, color: 'var(--text-faint)', marginBottom: 10 }}>Actual vs Forecast by region for {fy}</p>
+        <ForecastByRegionChart filters={filters} fy={fy} />
+      </div>
     </div>
   )
 }
@@ -521,7 +587,7 @@ const MODAL_TITLES = {
   queues:   'Queue Directory — Active & Inactive',
   volume:   'Offered vs Handled — Fiscal Year',
   dbOsp:    'DB vs OSP Offered Volume',
-  forecast: 'Regional Forecast Accuracy',
+  forecast: 'Forecast Accuracy — Fiscal Year',
   variance: 'Year-over-Year Forecast Variance',
 }
 
@@ -530,15 +596,17 @@ const MODAL_TITLES = {
 // the modal always returns to the dashboard exactly as filtered.
 function DrillDownModal({ type, filters, granularity, onClose }) {
   const [selectedYear, setSelectedYear] = useState(null)
+  const [selectedForecastYear, setSelectedForecastYear] = useState(null)
   return (
     <Modal title={MODAL_TITLES[type]} onClose={onClose}>
       {type === 'queues' && <QueuesSection filters={filters} />}
       {type === 'volume' && <><VolumeByFYChart filters={filters} granularity={granularity} /><HolidayCalendar /></>}
       {type === 'dbOsp' && <DbOspByFYChart filters={filters} granularity={granularity} />}
-      {type === 'forecast' && <ForecastByRegionChart filters={filters} />}
+      {type === 'forecast' && <ForecastByFYChart filters={filters} onSelectYear={setSelectedForecastYear} />}
       {type === 'variance' && <VarianceByFYChart filters={filters} onSelectYear={setSelectedYear} />}
 
       {selectedYear && <YearQueueModal fy={selectedYear} filters={filters} onClose={() => setSelectedYear(null)} />}
+      {selectedForecastYear && <ForecastYearRegionModal fy={selectedForecastYear} filters={filters} onClose={() => setSelectedForecastYear(null)} />}
     </Modal>
   )
 }
