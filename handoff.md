@@ -1,5 +1,12 @@
 # Project Handoff — ISG SPoG ESG Forecasting Dashboard
 
+## Per-Card RCA/CLCA Popup — Every KPI Card on All 4 Pages (2026-07-10)
+
+- **Extended the same small "i" popup to every KPI card** (20 total: 5 cards × 4 pages), matching the per-graph treatment added earlier the same day. Same `GraphInsightButton`, same one-RCA-sentence + one-CLCA-sentence content shape.
+- **Each page's local `Card` component changed from a `<button>` to a `<div role="button" tabIndex={0}>`** — the whole card is still fully clickable/keyboard-accessible (Enter/Space trigger it), but this was necessary so the new insight button (itself a real `<button>`) isn't nested inside another `<button>`, which is invalid. The insight button's wrapper stops click propagation so tapping it doesn't also toggle the card's own drill-down modal.
+- Touched `MetricCards.jsx` (ESG Forecasting), `HesMetricCards.jsx` (HES Forecasting — picks up `GraphInsightButton` automatically via `HesChartKit.jsx`'s existing re-export), `EsgCapacityMetricCards.jsx`, `HesCapacityMetricCards.jsx`.
+- **Verified**: `npm run build` clean; grep sweep confirming 6 `rca=` matches per file (1 destructure signature + 5 card call sites) across all 4 files — no card missed.
+
 ## Per-Graph RCA/CLCA Popup — Every Chart on All 4 Pages (2026-07-10)
 
 - **New small "i" button on every graph** (35 charts total: 31 chart-panel visuals + 4 Geo Maps), across all 4 pages — ESG Forecasting, HES Forecasting, ESG Capacity Plan, HES Capacity Plan. Clicking it opens a compact popup with one RCA sentence and one CLCA sentence specific to that graph's own metric — deliberately small ("don't exaggerate it"), not a repeat of the page-level RCA/CLCA sidebar's paragraph-length bullets.

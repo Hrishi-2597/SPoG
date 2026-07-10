@@ -6,7 +6,7 @@ import {
 import {
   capacityCardData, hcStaffingByFY, utilizationByFY, slTrendByFY, attritionByFY, cpfByFY,
 } from '../../data/esgCapacityData'
-import { C, Tip } from '../ChartKit'
+import { C, Tip, GraphInsightButton } from '../ChartKit'
 import { Modal } from '../Modal'
 
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
@@ -22,9 +22,21 @@ function StatusPip({ ok }) {
   )
 }
 
-function Card({ icon, label, value, sub, trend, onClick, active }) {
+// Changed from a plain <button> to a <div role="button"> (2026-07-10) so the new
+// per-card GraphInsightButton — a real nested <button> — doesn't sit inside another
+// <button> element; its wrapper stops click propagation so tapping it doesn't also
+// toggle the card's own drill-down.
+function Card({ icon, label, value, sub, trend, onClick, active, rca, clca }) {
   return (
-    <button onClick={onClick} className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`} style={{ cursor: 'pointer', padding: 0, minHeight: 84 }}>
+    <div role="button" tabIndex={0} onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`}
+      style={{ cursor: 'pointer', padding: 0, minHeight: 84, position: 'relative' }}>
+      {(rca || clca) && (
+        <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
+          <GraphInsightButton rca={rca} clca={clca} />
+        </div>
+      )}
       <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{label}</p>
@@ -39,7 +51,7 @@ function Card({ icon, label, value, sub, trend, onClick, active }) {
         )}
       </div>
       {active && <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', marginTop: 'auto' }} />}
-    </button>
+    </div>
   )
 }
 
@@ -199,23 +211,33 @@ export default function EsgCapacityMetricCards({ filters, granularity }) {
         <Card icon="👥" label="Staffing Summary"
           value={`${d.staffing.value}%`}
           sub={staffingYtd.text} trend={staffingYtd.trend}
-          onClick={() => toggle('staffing')} active={active === 'staffing'} />
+          onClick={() => toggle('staffing')} active={active === 'staffing'}
+          rca="Staffing variation is largest in quarters right after a hiring freeze."
+          clca="Smooth headcount ramp-up across quarters instead of a single freeze/unfreeze cycle." />
         <Card icon="📊" label="Utilization %"
           value={`${d.utilization.actual}%`}
           sub={utilizationYtd.text} trend={utilizationYtd.trend}
-          onClick={() => toggle('utilization')} active={active === 'utilization'} />
+          onClick={() => toggle('utilization')} active={active === 'utilization'}
+          rca="Utilization shortfalls trace back to a handful of recurring Aux codes."
+          clca="Add an Aux-code contingency buffer for queues with recurring exposure." />
         <Card icon="🎯" label="SL %"
           value={`${d.sl.actual}%`}
           sub={slYtd.text} trend={slYtd.trend}
-          onClick={() => toggle('sl')} active={active === 'sl'} />
+          onClick={() => toggle('sl')} active={active === 'sl'}
+          rca="SL misses concentrate in queues that are also over headcount plan."
+          clca="Prioritize a skill-mix/routing review for those queues over further hiring." />
         <Card icon="📋" label="Cases per FTE"
           value={d.casesPerFte.actual}
           sub={casesPerFteSub}
-          onClick={() => toggle('casesPerFte')} active={active === 'casesPerFte'} />
+          onClick={() => toggle('casesPerFte')} active={active === 'casesPerFte'}
+          rca="Cases per FTE trending above plan usually means volume growth outpaced the headcount plan."
+          clca="Re-baseline the Cases-per-FTE plan using the last two quarters of actuals." />
         <Card icon="↩" label="Attrition %"
           value={`${d.attrition.actual}%`}
           sub={attritionYtd.text} trend={attritionYtd.trend}
-          onClick={() => toggle('attrition')} active={active === 'attrition'} />
+          onClick={() => toggle('attrition')} active={active === 'attrition'}
+          rca="Attrition is concentrated in regions with the longest backfill lead time."
+          clca="Shorten the backfill pipeline for the regions driving attrition." />
       </div>
 
       {active && <DrillDownModal type={active} filters={filters} granularity={granularity} onClose={() => setActive(null)} />}

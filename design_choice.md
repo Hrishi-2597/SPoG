@@ -651,6 +651,22 @@ accent:   #4fc3f7  ← highlights, actuals bars, line charts
 
 ---
 
+## Per-Card RCA/CLCA Popup (2026-07-10)
+
+### Card container changed from `<button>` to `<div role="button">`
+**Decision:** Each page's local `Card` component (the whole KPI card is one big clickable element opening its drill-down) switched from `<button onClick={...}>` to `<div role="button" tabIndex={0} onClick={...} onKeyDown={...}>`.
+**Why:** The new insight button is a real `<button>` element, and nesting a `<button>` inside another `<button>` is invalid HTML (the outer element's content model doesn't permit interactive descendants) — browsers handle it inconsistently and screen readers announce it confusingly. Swapping the outer element for a `div` with `role="button"` and an explicit `onKeyDown` (Enter/Space) preserves the exact same click and keyboard behavior the card already had, while making the nested real `<button>` valid.
+
+### Same one-sentence RCA/CLCA content shape as the graphs
+**Decision:** Every card's popup follows the identical shape established for graphs earlier the same day — one RCA sentence, one CLCA sentence, via the same `GraphInsightButton`.
+**Why:** The request extended the existing ask ("also add i button for each and every card and graph") rather than describing a new interaction — reusing the exact same component and content conventions means cards and graphs read consistently, and no new UI pattern had to be invented for cards specifically.
+
+### Positioned top-right (not top-left, unlike graphs)
+**Decision:** On cards, the button sits top-right of the card header; on graphs, it sits top-left (opposite `cornerControls`).
+**Why:** Cards have no existing top-right control to collide with (unlike many graphs, which use `cornerControls` for Region/Sub-region toggles) — top-right reads naturally as "a small badge in the corner of this card" without needing to reserve the graph convention's specific corner. Consistency of *meaning* (small "i" badge = insight popup) mattered more here than consistency of *position*, since cards and graphs are visually distinct enough that a reader won't expect the exact same pixel corner.
+
+---
+
 ## What Was Deliberately NOT Done
 
 | Thing skipped | Reason |

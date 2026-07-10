@@ -368,6 +368,19 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 30 — 2026-07-10
+**Input:** "Also add i button for each and every card and graph..across all 4pages"
+
+**Action:**
+- Extended the per-graph `GraphInsightButton` popup (added earlier the same day) to every KPI card — 20 total, 5 cards × 4 pages
+- Changed each page's local `Card` component (`MetricCards.jsx`, `HesMetricCards.jsx`, `EsgCapacityMetricCards.jsx`, `HesCapacityMetricCards.jsx`) from a `<button>` to a `<div role="button" tabIndex={0}>` with an explicit Enter/Space `onKeyDown` handler — necessary since the new insight button is a real nested `<button>`, which HTML doesn't allow inside another `<button>`
+- Added `rca`/`clca` one-liners to all 20 card call sites, positioned top-right of each card (opposite corner from the graph placement, since cards have no existing top-right control to avoid)
+- Verified with `npm run build` (clean) and a grep sweep confirming 6 `rca=` matches per file (1 destructure + 5 cards) across all 4 metric-card files
+- Started the dev server and opened it in the user's browser for manual verification (no browser-automation tool available this session)
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
 ## Prompt 28 — 2026-07-08
 **Input:** "for forecast accuracy dropdown instead of showing region as default..show year wise accuracy as default and when user clicks on a particular year it should open a pop up again to show region wise"
 

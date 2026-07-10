@@ -8,6 +8,7 @@ import {
   CQN_VARIANCE_BY_FY, cqnVarianceQueuesByFY, allQueuesByStatus, queuesByBusinessPartner,
 } from '../data/mockData'
 import { Modal } from './Modal'
+import { GraphInsightButton } from './ChartKit'
 
 // pct: violet for the "% trend line" role — matches the app-wide convention that
 // neutral analytical lines get violet, since green/handled already means something else here.
@@ -37,13 +38,25 @@ function StatusPip({ ok }) {
   )
 }
 
-function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active }) {
+// Changed from a plain <button> to a <div role="button"> (2026-07-10) so the new
+// per-card GraphInsightButton — a real nested <button> — doesn't sit inside another
+// <button> element; the insight button's wrapper stops click propagation so tapping
+// it doesn't also toggle the card's own drill-down open/closed.
+function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active, rca, clca }) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
       className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`}
-      style={{ cursor: 'pointer', padding: 0, minHeight: 84 }}
+      style={{ cursor: 'pointer', padding: 0, minHeight: 84, position: 'relative' }}
     >
+      {(rca || clca) && (
+        <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
+          <GraphInsightButton rca={rca} clca={clca} />
+        </div>
+      )}
       <div style={{
         padding: '8px 12px 6px',
         borderBottom: '1px solid var(--border-subtle)',
@@ -74,7 +87,7 @@ function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active })
           marginTop: 'auto',
         }} />
       )}
-    </button>
+    </div>
   )
 }
 
@@ -624,6 +637,8 @@ export default function MetricCards({ filters, granularity }) {
           value={`${d.totalQueues.active} / ${d.totalQueues.active + d.totalQueues.inactive}`}
           sub={`${d.totalQueues.inactive} inactive queues`}
           onClick={() => toggle('queues')} active={active === 'queues'}
+          rca="A large inactive count often means queues were retired without a formal offboard step."
+          clca="Reconcile the inactive list each quarter and archive queues no longer needed."
         />
         <Card id="volume"
           icon="📞" label="Call Volume" sublabel="Offered & Handled"
@@ -631,12 +646,16 @@ export default function MetricCards({ filters, granularity }) {
           sub={`${fmt(d.callVolume.handled)} handled · ${d.callVolume.abandonPct}% abandoned`}
           trend={d.callVolume.abandonPct <= 10}
           onClick={() => toggle('volume')} active={active === 'volume'}
+          rca="Abandon rate climbs fastest around the holidays in the Holiday Calendar below."
+          clca="Pre-staff for the holidays with the largest historical volume swings."
         />
         <Card id="dbOsp"
           icon="⚖" label="DB / OSP Split" sublabel="Offered volume"
           value={`${d.dbOspSplit.db}% / ${d.dbOspSplit.osp}%`}
           sub={`DB ${fmt(d.dbOspSplit.dbVol)}  ·  OSP ${fmt(d.dbOspSplit.ospVol)}`}
           onClick={() => toggle('dbOsp')} active={active === 'dbOsp'}
+          rca="OSP share tends to rise when DB queues are running over plan."
+          clca="Review OSP routing rules whenever the split shifts more than a few points quarter over quarter."
         />
         <Card id="forecast"
           icon="◎" label="Forecast Accuracy" sublabel=""
@@ -644,6 +663,8 @@ export default function MetricCards({ filters, granularity }) {
           sub={`Target ${d.forecastAccuracy.target}% · ${d.forecastAccuracy.value >= d.forecastAccuracy.target ? 'On track' : 'Below target'}`}
           trend={d.forecastAccuracy.value >= d.forecastAccuracy.target}
           onClick={() => toggle('forecast')} active={active === 'forecast'}
+          rca="Below-target years usually trace back to one or two underperforming regions."
+          clca="Open the year with the lowest accuracy and drill into its regional breakdown first."
         />
         <Card id="variance"
           icon="±" label="CQN Variance" sublabel="Within ±10%"
@@ -651,6 +672,8 @@ export default function MetricCards({ filters, granularity }) {
           sub={`${d.cqnVariance.withinRange} of ${d.cqnVariance.total} queues`}
           trend={d.cqnVariance.pct >= 40}
           onClick={() => toggle('variance')} active={active === 'variance'}
+          rca="Queues outside the ±10% band cluster in years with late plan updates."
+          clca="Re-baseline the outlier queues' plans before the next AOP lock."
         />
       </div>
 

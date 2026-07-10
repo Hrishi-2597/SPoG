@@ -6,7 +6,7 @@ import {
 import {
   hesCardData, asuByFY, srDbOspByFY, cpasuByFY, ucrByFY, HES_ACTIVE_QUEUES,
 } from '../../data/hesData'
-import { C, Tip, Modal } from './HesChartKit'
+import { C, Tip, Modal, GraphInsightButton } from './HesChartKit'
 
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
 // Same region palette as the Forecasting page's Total Queues donut (MetricCards.jsx)
@@ -30,9 +30,21 @@ function StatusPip({ ok }) {
   )
 }
 
-function Card({ icon, label, sublabel, value, sub, trend, onClick, active }) {
+// Changed from a plain <button> to a <div role="button"> (2026-07-10) so the new
+// per-card GraphInsightButton — a real nested <button> — doesn't sit inside another
+// <button> element; its wrapper stops click propagation so tapping it doesn't also
+// toggle the card's own drill-down.
+function Card({ icon, label, sublabel, value, sub, trend, onClick, active, rca, clca }) {
   return (
-    <button onClick={onClick} className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`} style={{ cursor: 'pointer', padding: 0, minHeight: 84 }}>
+    <div role="button" tabIndex={0} onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`}
+      style={{ cursor: 'pointer', padding: 0, minHeight: 84, position: 'relative' }}>
+      {(rca || clca) && (
+        <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
+          <GraphInsightButton rca={rca} clca={clca} />
+        </div>
+      )}
       <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
         <div>
@@ -50,7 +62,7 @@ function Card({ icon, label, sublabel, value, sub, trend, onClick, active }) {
         )}
       </div>
       {active && <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', marginTop: 'auto' }} />}
-    </button>
+    </div>
   )
 }
 
@@ -286,24 +298,34 @@ export default function HesMetricCards({ filters, granularity }) {
         <Card icon="⬡" label="Total Queues" sublabel="Active / Inactive"
           value={`${d.totalQueues.active} / ${d.totalQueues.active + d.totalQueues.inactive}`}
           sub={`${d.totalQueues.inactive} inactive queues`}
-          onClick={() => toggle('totalQueues')} active={active === 'totalQueues'} />
+          onClick={() => toggle('totalQueues')} active={active === 'totalQueues'}
+          rca="A large inactive count often means queues were retired without a formal offboard step."
+          clca="Reconcile the inactive list each quarter and archive queues no longer needed." />
         <Card icon="📶" label="Active Service Units" sublabel="Trend over time"
           value={fmt(d.asuActuals.value)}
           sub={asuYtd.text} trend={asuYtd.trend}
-          onClick={() => toggle('asu')} active={active === 'asu'} />
+          onClick={() => toggle('asu')} active={active === 'asu'}
+          rca="ASU dips usually follow a slower-than-modeled ramp on recently onboarded queues."
+          clca="Re-forecast ASU using actual onboarding velocity before the next AOP lock." />
         <Card icon="🎫" label="Service Requests" sublabel="DB / OSP handled"
           value={fmt(d.srActuals.value)}
           sub={srYtd.text} trend={srYtd.trend}
-          onClick={() => toggle('sr')} active={active === 'sr'} />
+          onClick={() => toggle('sr')} active={active === 'sr'}
+          rca="SR growth tends to outpace ASU when case complexity rises."
+          clca="Add a complexity-adjusted buffer to the SR plan." />
         <Card icon="➗" label="CPASU" sublabel="SR ÷ ASU"
           value={d.cpasu.value.toFixed(2)}
           sub={cpasuYtd.text} trend={cpasuYtd.trend}
-          onClick={() => toggle('cpasu')} active={active === 'cpasu'} />
+          onClick={() => toggle('cpasu')} active={active === 'cpasu'}
+          rca="CPASU rises fastest in regions with the lowest bot deflection."
+          clca="Expand bot-deflection coverage in the regions driving the increase." />
         <Card icon="🎯" label="Current UCR" sublabel="vs Target"
           value={`${d.currentUcr.value}%`}
           sub={`Target ${d.currentUcr.target}% · ${d.currentUcr.adherence}% adherence`}
           trend={d.currentUcr.adherence >= 95}
-          onClick={() => toggle('ucr')} active={active === 'ucr'} />
+          onClick={() => toggle('ucr')} active={active === 'ucr'}
+          rca="Non-adherent LOBs share a common low bot-deflection profile."
+          clca="Prioritize automation coverage for the LOBs furthest from target." />
       </div>
 
       {active && <DrillDownModal type={active} filters={filters} granularity={granularity} onClose={() => setActive(null)} />}

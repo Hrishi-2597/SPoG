@@ -6,7 +6,7 @@ import {
 import {
   hesCapacityCardData, fteByFY, hesAttritionByFY, cpfByFY, actHrsByFY, geoSloByRegion,
 } from '../../data/hesCapacityData'
-import { C, Tip } from '../ChartKit'
+import { C, Tip, GraphInsightButton } from '../ChartKit'
 import { Modal } from '../Modal'
 
 const CHART_BOX = { maxWidth: 620, margin: '0 auto' }
@@ -22,9 +22,21 @@ function StatusPip({ ok }) {
   )
 }
 
-function Card({ icon, label, value, sub, trend, onClick, active }) {
+// Changed from a plain <button> to a <div role="button"> (2026-07-10) so the new
+// per-card GraphInsightButton — a real nested <button> — doesn't sit inside another
+// <button> element; its wrapper stops click propagation so tapping it doesn't also
+// toggle the card's own drill-down.
+function Card({ icon, label, value, sub, trend, onClick, active, rca, clca }) {
   return (
-    <button onClick={onClick} className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`} style={{ cursor: 'pointer', padding: 0, minHeight: 84 }}>
+    <div role="button" tabIndex={0} onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className={`card-panel flex-1 min-w-0 text-left flex flex-col${active ? ' active' : ''}`}
+      style={{ cursor: 'pointer', padding: 0, minHeight: 84, position: 'relative' }}>
+      {(rca || clca) && (
+        <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
+          <GraphInsightButton rca={rca} clca={clca} />
+        </div>
+      )}
       <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{label}</p>
@@ -39,7 +51,7 @@ function Card({ icon, label, value, sub, trend, onClick, active }) {
         )}
       </div>
       {active && <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', marginTop: 'auto' }} />}
-    </button>
+    </div>
   )
 }
 
@@ -193,24 +205,34 @@ export default function HesCapacityMetricCards({ filters, granularity }) {
         <Card icon="🧑‍💼" label="Staffing Summary"
           value={d.totalFte.actual.toLocaleString()}
           sub={staffingYtd.text} trend={staffingYtd.trend}
-          onClick={() => toggle('fte')} active={active === 'fte'} />
+          onClick={() => toggle('fte')} active={active === 'fte'}
+          rca="Staffing variation widens in quarters right after a hiring freeze."
+          clca="Smooth headcount ramp-up across quarters instead of freeze/unfreeze cycles." />
         <Card icon="↩" label="Attrition %"
           value={`${d.attrition.actual}%`}
           sub={attritionYtd.text} trend={attritionYtd.trend}
-          onClick={() => toggle('attrition')} active={active === 'attrition'} />
+          onClick={() => toggle('attrition')} active={active === 'attrition'}
+          rca="Attrition is highest in sub-regions with the longest backfill lead time."
+          clca="Shorten the backfill pipeline for the sub-regions driving attrition." />
         <Card icon="📋" label="Cases per FTE"
           value={d.casesPerFte.actual}
           sub={`Plan ${d.casesPerFte.plan}`}
           trend={d.casesPerFte.actual <= d.casesPerFte.plan}
-          onClick={() => toggle('casesPerFte')} active={active === 'casesPerFte'} />
+          onClick={() => toggle('casesPerFte')} active={active === 'casesPerFte'}
+          rca="Cases per FTE trending above plan usually means volume growth outpaced the headcount plan."
+          clca="Re-baseline the Cases-per-FTE plan using the last two quarters of actuals." />
         <Card icon="⏱" label="Avg Case Time"
           value={`${d.avgCaseTime.actual}h`}
           sub={avgCaseTimeYtd.text} trend={avgCaseTimeYtd.trend}
-          onClick={() => toggle('avgCaseTime')} active={active === 'avgCaseTime'} />
+          onClick={() => toggle('avgCaseTime')} active={active === 'avgCaseTime'}
+          rca="A handful of LOBs are driving most of the above-plan case time."
+          clca="Prioritize a case-time review for the LOBs topping the Workload Distribution list." />
         <Card icon="🎯" label="SLO %"
           value={`${d.globalSlo.actual}%`}
           sub={sloYtd.text} trend={sloYtd.trend}
-          onClick={() => toggle('globalSlo')} active={active === 'globalSlo'} />
+          onClick={() => toggle('globalSlo')} active={active === 'globalSlo'}
+          rca="SLO lags in the same regions that also show above-plan Average Case Time."
+          clca="Tie SLO recovery plans to Average Case Time improvement first in those regions." />
       </div>
 
       {active && <DrillDownModal type={active} filters={filters} granularity={granularity} onClose={() => setActive(null)} />}

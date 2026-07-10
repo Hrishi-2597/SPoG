@@ -260,7 +260,7 @@ The shared `capacity/PlanOverPlanLayer.jsx` component (and its containing `capac
 
 ---
 
-## Per-Graph RCA/CLCA Popup (2026-07-10)
+## Per-Graph and Per-Card RCA/CLCA Popup (2026-07-10)
 
 Every chart-level visual on all 4 pages (31 `Visual`-wrapped charts + the 4 Geo Maps, which have their own
 custom layout) carries a small "i" button (`GraphInsightButton`, `ChartKit.jsx`) in its top-left corner. Clicking
@@ -272,6 +272,13 @@ other `Visual` call site in the app that hasn't been touched continues to work u
 top-left, opposite `cornerControls` (top-right), which many visuals already use for Region/Sub-region-style
 toggles, so the two never collide. Content is illustrative (same convention as the sidebars), one sentence each,
 per the explicit "don't exaggerate it, just a small pop-up" request.
+
+**Follow-up the same day**: extended to all 20 KPI cards (5 cards × 4 pages) via the same `rca`/`clca` props on
+each page's own local `Card` component (`MetricCards.jsx`, `HesMetricCards.jsx`, `EsgCapacityMetricCards.jsx`,
+`HesCapacityMetricCards.jsx`), positioned top-right of the card. Each `Card` changed from a `<button>` to a
+`<div role="button" tabIndex={0}>` so the new nested `GraphInsightButton` (a real `<button>`) isn't invalid
+HTML inside another `<button>`; the insight button's wrapper stops click propagation so it doesn't also toggle
+the card's drill-down modal.
 
 ## Theming (2026-07-02)
 
