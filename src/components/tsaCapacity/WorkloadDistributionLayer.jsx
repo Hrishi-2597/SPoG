@@ -10,10 +10,10 @@ import { C, Visual, Tip, BinaryToggle } from '../ChartKit'
 // node paints the real LOB/queue name next to it so the diagram is legible without
 // hovering every node, same "read without hovering" bar towards labeled data
 // established for the horizontal queue-bar charts elsewhere in this app.
-function SankeyNode({ x, y, width, height, index, payload }) {
+function SankeyNode({ x, y, width, height, index, payload, onHover, onLeave }) {
   const isSource = payload.sourceLinks.length > 0
   return (
-    <g>
+    <g onMouseEnter={() => onHover?.(payload)} onMouseLeave={() => onLeave?.()} style={{ cursor: 'pointer' }}>
       <Rectangle x={x} y={y} width={width} height={height} fill={isSource ? C.metric1 : C.metric2} fillOpacity={0.85} />
       <text
         textAnchor={isSource ? 'end' : 'start'}
@@ -27,6 +27,21 @@ function SankeyNode({ x, y, width, height, index, payload }) {
       </text>
     </g>
   )
+}
+
+// Hovering a node shows every flow touching it as a list with each connected node's
+// share of THIS node's total volume — e.g. hover a LOB (source) to see every CQN it
+// supports and what % of that LOB's volume each one represents; hover a CQN (target)
+// to see every LOB supporting it the same way. Separate from the link-hover Tooltip
+// below, which only shows one single source→target flow at a time.
+function nodeHoverSummary(payload) {
+  const isSource = payload.sourceLinks.length > 0
+  const links = isSource ? payload.sourceLinks : payload.targetLinks
+  const total = links.reduce((s, l) => s + l.value, 0)
+  const items = links
+    .map(l => ({ name: isSource ? l.target.name : l.source.name, value: l.value, pct: total ? +(l.value / total * 100).toFixed(1) : 0 }))
+    .sort((a, b) => b.value - a.value)
+  return { name: payload.name, isSource, items, total }
 }
 
 function SankeyTip({ active, payload }) {
@@ -48,24 +63,46 @@ function SankeyTip({ active, payload }) {
 // direct request to "utilize some TSA LOB's and some TSA Queues."
 function Visual1({ filters }) {
   const [mode, setMode] = useState('LOB')
+  const [hoveredNode, setHoveredNode] = useState(null)
   const data = useMemo(() => workloadSankey(filters, mode), [filters, mode])
+  const handleHover = payload => setHoveredNode(nodeHoverSummary(payload))
   return (
     <Visual title="Workload Distribution"
       subtitle={mode === 'LOB' ? 'Illustrative CQN priority tiers routed to real LOBs' : 'Illustrative LOB priority tiers routed to real queues'}
       cornerControls={<BinaryToggle leftLabel="LOB" rightLabel="CQN" value={mode} onChange={setMode} />}
       rca="Flow concentrates into a small number of LOBs/queues rather than spreading evenly."
       clca="Balance routing rules to reduce concentration in the top-loaded nodes.">
-      <ResponsiveContainer width="100%" height={260}>
-        <Sankey
-          data={data}
-          node={<SankeyNode />}
-          nodePadding={22}
-          margin={{ top: 8, right: 90, bottom: 8, left: 90 }}
-          link={{ stroke: C.trend, strokeOpacity: 0.35 }}
-        >
-          <Tooltip content={<SankeyTip />} />
-        </Sankey>
-      </ResponsiveContainer>
+      <div style={{ position: 'relative' }}>
+        {hoveredNode && (
+          <div className="chart-tooltip animate-fade-in" style={{ position: 'absolute', top: 4, right: 4, zIndex: 10, width: 200, textAlign: 'left' }}>
+            <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--accent)', marginBottom: 4 }}>
+              {hoveredNode.name}
+              <span style={{ fontWeight: 400, color: 'var(--text-faint)', fontSize: 9 }}>
+                {' '}{hoveredNode.isSource ? '— supports' : '— supported by'}
+              </span>
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxHeight: 170, overflowY: 'auto' }}>
+              {hoveredNode.items.map((it, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 10 }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>{it.name}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>{it.value} ({it.pct}%)</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <ResponsiveContainer width="100%" height={260}>
+          <Sankey
+            data={data}
+            node={<SankeyNode onHover={handleHover} onLeave={() => setHoveredNode(null)} />}
+            nodePadding={22}
+            margin={{ top: 8, right: 90, bottom: 8, left: 90 }}
+            link={{ stroke: C.trend, strokeOpacity: 0.35 }}
+          >
+            <Tooltip content={<SankeyTip />} />
+          </Sankey>
+        </ResponsiveContainer>
+      </div>
     </Visual>
   )
 }

@@ -66,10 +66,13 @@ export function tsaAttritionByFY(filters = {}, granularity, lens = 'Region') {
   const years = tsaEffectiveFiscalYears(filters)
   const lensScale = lens === 'Country' ? 0.97 : 1
   const fyRows = TSA_ATTRITION_BY_FY.filter(d => years.includes(d.period))
-    .map(d => ({ period: d.period, headcount: Math.round(d.headcount * lensScale), attrition: d.attrition }))
+    .map(d => ({ period: d.period, headcount: Math.round(d.headcount * lensScale), attrition: d.attrition, bench: d.bench }))
   const expandedHc = expandToGranularity(fyRows, granularity, ['headcount'])
-  const expandedRate = expandRateToGranularity(fyRows, granularity, ['attrition'])
-  return expandedHc.map((d, i) => ({ ...d, attrition: expandedRate[i].attrition }))
+  // bench (the attrition benchmark target) rides along as a rate field too — added
+  // 2026-07-20 so tsaCapacityCardData's Attrition card can read it straight off this
+  // granular series instead of falling back to the FY-only raw table.
+  const expandedRate = expandRateToGranularity(fyRows, granularity, ['attrition', 'bench'])
+  return expandedHc.map((d, i) => ({ ...d, attrition: expandedRate[i].attrition, bench: expandedRate[i].bench }))
 }
 
 // Region/Sub-region default view for HeadcountAttritionLayer Visual2 — one row per
@@ -205,6 +208,17 @@ export function geoSloBySubRegion() {
   return TSA_GEO_SLO_BY_SUBREGION
 }
 
+// Granular Global SLO trend (2026-07-20, added for the card headline's MoM/QoQ
+// comparison — see tsaCapacityCardData below). `actual`/`target` are both rate/
+// percentage fields, same reasoning as utilizationByFY's target — expanding both
+// keeps the target riding along at the right value per period instead of needing a
+// separate bare-FY lookup once the period label is granular (e.g. "FY27 Q1").
+export function sloByFY(filters = {}, granularity) {
+  const years = tsaEffectiveFiscalYears(filters)
+  const fyRows = SLO_BY_FY.filter(d => years.includes(d.period))
+  return expandRateToGranularity(fyRows, granularity, ['actual', 'target'])
+}
+
 // Year-over-year % change between the latest in-scope FY and the one before it;
 // null when there's no prior year in scope, same convention as msgCapacityData.js's yoyPct.
 function yoyPct(curr, prev) {
@@ -213,35 +227,37 @@ function yoyPct(curr, prev) {
 }
 
 // ── Card headlines ─────────────────────────────────────────────────────────
-// Staffing Summary/Attrition/Avg Case Time/SLO % headline values drill with the
-// page-wide granularity slicer; each YTD/YoY comparison stays FY-over-FY regardless
-// of granularity — same split as msgCapacityData.js's capacityCardData. Cases per
-// FTE is unchanged (still a plain Plan-based sub-line, not part of this revision).
+// The headline `value`/`actual` AND the `period`/`prevPeriod`/`yoyPct` comparison
+// both drill with the page-wide granularity slicer — 2026-07-20 change, superseding
+// the prior "comparison always stays FY-over-FY" decision, per direct request
+// (compare Month-over-Month/Quarter-over-Quarter instead of always last year). Each
+// metric already has (or, for SLO, now has — see sloByFY above) a granularity-aware
+// selector built for its own drill-down chart, so this just reuses the last two
+// entries of those series instead of a separate FY-only lookup. Cases per FTE is
+// unchanged (still a plain Plan-based sub-line with no yoyPct field at all).
 export function tsaCapacityCardData(filters = {}, granularity) {
   const years = tsaEffectiveFiscalYears(filters)
   const fteGranular = fteByFY(filters, granularity)
-  const fteFY = fteByFY(filters)
-  const attritionFY = TSA_ATTRITION_BY_FY.filter(d => years.includes(d.period))
+  const attritionGranular = tsaAttritionByFY(filters, granularity)
   const cpf = CPF_BY_FY.filter(d => years.includes(d.period))
-  const actFY = ACT_BY_FY.filter(d => years.includes(d.period))
-  const sloFY = SLO_BY_FY.filter(d => years.includes(d.period))
+  const actGranular = actHrsByFY(filters, granularity)
+  const sloGranular = sloByFY(filters, granularity)
 
   const latestFte = fteGranular[fteGranular.length - 1]
-  const latestFteFY = fteFY[fteFY.length - 1]
-  const prevFteFY = fteFY[fteFY.length - 2]
-  const latestAttrition = attritionFY[attritionFY.length - 1]
-  const prevAttrition = attritionFY[attritionFY.length - 2]
+  const prevFte = fteGranular[fteGranular.length - 2]
+  const latestAttrition = attritionGranular[attritionGranular.length - 1]
+  const prevAttrition = attritionGranular[attritionGranular.length - 2]
   const latestCpf = cpf[cpf.length - 1]
-  const latestAct = actFY[actFY.length - 1]
-  const prevAct = actFY[actFY.length - 2]
-  const latestSlo = sloFY[sloFY.length - 1]
-  const prevSlo = sloFY[sloFY.length - 2]
+  const latestAct = actGranular[actGranular.length - 1]
+  const prevAct = actGranular[actGranular.length - 2]
+  const latestSlo = sloGranular[sloGranular.length - 1]
+  const prevSlo = sloGranular[sloGranular.length - 2]
   const regionsAtRisk = latestSlo ? TSA_GEO_SLO_BY_REGION.filter(r => r.slo < latestSlo.target).length : 0
 
   return {
     totalFte: {
       actual: latestFte?.actual ?? 0, plan: latestFte?.plan ?? 0,
-      period: latestFteFY?.period, prevPeriod: prevFteFY?.period, yoyPct: yoyPct(latestFteFY?.actual, prevFteFY?.actual),
+      period: latestFte?.period, prevPeriod: prevFte?.period, yoyPct: yoyPct(latestFte?.actual, prevFte?.actual),
     },
     attrition: {
       actual: latestAttrition?.attrition ?? 0, bench: latestAttrition?.bench ?? 0,

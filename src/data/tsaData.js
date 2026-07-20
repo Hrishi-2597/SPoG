@@ -400,9 +400,15 @@ export function geoAdherenceByRegion(filters = {}) {
 }
 export { regionForCountry }
 
-// Year-over-year % change between the latest in-scope FY and the one before it;
-// null when there's no prior year in scope (e.g. filters narrowed to a single FY),
-// so callers can fall back to an "n/a" message instead of a misleading 0%.
+// % change between the latest in-scope period and the one before it. "Period" tracks
+// whatever granularity the caller's series was built at (2026-07-20 fix — tsaCardData
+// now forwards granularity into asuByFY/srByFY/cpasuByFY instead of always defaulting
+// to Year, so this compares Month-over-Month or Quarter-over-Quarter when the page's
+// Quarter/Month/Week toggle is set, falling back to Year-over-Year only at the Year
+// default) — the name stayed `yoyPct` to avoid touching every call site, but it's
+// period-over-period now. Null when there's no prior period in scope (e.g. filters
+// narrowed to a single FY), so callers can fall back to an "n/a" message instead of a
+// misleading 0%.
 function yoyPct(curr, prev) {
   if (prev === undefined || prev === null || !prev) return null
   return +(((curr - prev) / prev) * 100).toFixed(1)
@@ -414,11 +420,11 @@ function yoyPct(curr, prev) {
 // totalQueues doesn't depend on filters — the TSA queue roster has no per-queue
 // lob/businessPartner/globalGrouping tags to narrow by, same reasoning as why
 // "UCR Runrate with Target" ignores Quarter/Week filters.
-export function tsaCardData(filters = {}) {
-  const asu = asuByFY(filters)
-  const sr = srByFY(filters)
-  const ucr = ucrByFY(filters)
-  const cpasu = cpasuByFY(filters)
+export function tsaCardData(filters = {}, granularity) {
+  const asu = asuByFY(filters, granularity)
+  const sr = srByFY(filters, granularity)
+  const ucr = ucrByFY(filters, granularity)
+  const cpasu = cpasuByFY(filters, granularity)
   const latestAsu = asu[asu.length - 1]
   const prevAsu = asu[asu.length - 2]
   const latestSr = sr[sr.length - 1]

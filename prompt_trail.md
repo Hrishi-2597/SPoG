@@ -466,6 +466,18 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 35 — 2026-07-20
+**Input:** "1. Fix DB vs OSP percentage calculations and interaction behavior (when overall view is 66% and 34% and then i switch to DB for example it should show 64% and for OSP it should show 36%). 2. the Sankey chart - when we hover over a LOB or CQN it should show the LOB supporting CQN's and vice versa as list on hover and the percentage split example - If 1 lob is supporting 5 CQN then % of volume of each CQN and vice versa. 3. Compare Month-over-Month and Quarter-over-Quarter instead of always comparing against last year where applicable."
+
+**Action:**
+- **(1) DB/OSP Split card:** root-caused `mockData.js`'s `cardData()` computing the split from `filterQueues(filters)` — already narrowed by the active DB/OSP pill — so selecting "DB"/"OSP" always degenerated to 100%/0%. Fixed to always compute from a `{...filters, dbOsp:'All'}`-scoped row set, summed by each queue's real `offered` volume (not queue count, matching the card's own "Offered volume" sublabel). Verified via Node smoke test: split now holds steady (66%/34%) across All/DB/OSP instead of collapsing to 100/0.
+- **(2) Sankey hover:** added `nodeHoverSummary()` to `WorkloadDistributionLayer.jsx` — hovering a LOB or CQN node now shows every node on the other side it connects to, with value + % of the hovered node's own total, via a fixed top-right panel (same convention as the Geo Maps' hover tooltip). Reuses the existing `sourceLinks`/`targetLinks` node payload the custom `SankeyNode` already destructured; no new data plumbing needed.
+- **(3) MoM/QoQ instead of always YoY:** `tsaData.js`'s `tsaCardData(filters)` never accepted/forwarded `granularity` to `asuByFY`/`srByFY`/`cpasuByFY` — a real bug, fixed by threading it through (`TsaMetricCards.jsx` now passes `granularity`). Asked the user whether the same change should override MSG/TSA Capacity's *deliberate* prior "always FY-over-FY" design decision too — confirmed yes. Extended `capacityCardData`/`tsaCapacityCardData` to reuse each metric's existing granular selector for the prior-period comparison instead of a separate FY-only lookup; added a new `sloByFY(filters, granularity)` (no granular Global SLO series existed before) and added `bench` to `tsaAttritionByFY`'s rate expansion; fixed a `.slice(0,4)` bug this surfaced in `msgCapacityData.js`'s `target` lookups (keyed by bare FY, but the period is now granular).
+- Verified all three with `npm run build` (clean) plus a Node smoke test on `capacityCardData`/`tsaCapacityCardData` at Year/Quarter/Month — correct periods/targets/deltas, no `NaN`/undefined. Noted one non-bug caveat: MSG Capacity's "Staffing" card shows ~0% MoM/QoQ since it's a ratio where `expandToGranularity` cancels out across numerator/denominator — inherent to the existing expansion helper.
+- Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
 ## Prompt 34 — 2026-07-20
 **Input:** "Allow clicking on a region to highlight only the selected area instead of showing all regions together"
 

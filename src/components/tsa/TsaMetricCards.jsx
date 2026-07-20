@@ -285,7 +285,7 @@ function ytdSub(metric, formattedValue, { lowerIsBetter = false } = {}) {
 
 export default function TsaMetricCards({ filters, granularity }) {
   const [active, setActive] = useState(null)
-  const d = useMemo(() => tsaCardData(filters), [filters])
+  const d = useMemo(() => tsaCardData(filters, granularity), [filters, granularity])
   const toggle = key => setActive(prev => prev === key ? null : key)
 
   const asuYtd = ytdSub(d.asuActuals, fmt(d.asuActuals.value))

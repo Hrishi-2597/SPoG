@@ -356,52 +356,57 @@ function yoyPct(curr, prev) {
 }
 
 // ── Card headlines ─────────────────────────────────────────────────────────
-// The headline `value`/`actual` for each card drills with the page-wide Quarter/
-// Month/Week slicer (granularity); the YTD `period`/`prevPeriod`/`yoyPct` comparison
-// is always FY-over-FY regardless of granularity — same split TSA Forecasting's
-// tsaCardData uses, since a granular sub-year YoY comparison has no real baseline
-// to compare against (the sub-period numbers are themselves synthesized from the FY
-// total). Staffing/Utilization/SL adherence % naturally don't shift with queue-scoping
-// filters (both sides of each ratio scale together) — only headcount totals (Total FTE)
-// visibly respond, same reasoning as the Forecasting/TSA cards' rate metrics.
+// The headline `value`/`actual` AND the `period`/`prevPeriod`/`yoyPct` comparison
+// both drill with the page-wide Quarter/Month/Week slicer (granularity) — 2026-07-20
+// change, superseding the prior "comparison always stays FY-over-FY" decision, per
+// direct request ("compare Month-over-Month and Quarter-over-Quarter instead of
+// always comparing against last year where applicable"). Each metric already has a
+// granularity-aware selector (hcStaffingByFY/utilizationByFY/slTrendByFY/
+// attritionByFY) built for its own drill-down chart, so no new expansion logic was
+// needed — this just reuses the last two entries of those same series for the
+// latest/prev comparison instead of a separate FY-only lookup. Staffing/Utilization/
+// SL adherence % naturally don't shift with queue-scoping filters (both sides of each
+// ratio scale together) — only headcount totals (Total FTE) visibly respond, same
+// reasoning as the Forecasting/TSA cards' rate metrics.
 export function capacityCardData(filters = {}, granularity) {
   const years = effectiveFiscalYears(filters)
   const hcGranular = hcStaffingByFY(filters, granularity)
-  const hcFY = hcStaffingByFY(filters)
-  const utilFY = UTIL_BY_FY.filter(d => years.includes(d.period))
-  const slFY = SL_TREND_BY_FY.filter(d => years.includes(d.period))
-  const attritionFY = ATTRITION_BY_FY.filter(d => years.includes(d.period))
+  const utilGranular = utilizationByFY(filters, granularity)
+  const slGranular = slTrendByFY(filters, granularity)
+  const attritionGranular = attritionByFY(filters, granularity)
   const cpfFY = CPF_BY_FY.filter(d => years.includes(d.period))
 
   const latestHc = hcGranular[hcGranular.length - 1]
-  const latestHcFY = hcFY[hcFY.length - 1]
-  const prevHcFY = hcFY[hcFY.length - 2]
-  const latestUtil = utilFY[utilFY.length - 1]
-  const prevUtil = utilFY[utilFY.length - 2]
-  const latestSl = slFY[slFY.length - 1]
-  const prevSl = slFY[slFY.length - 2]
-  const latestAttrition = attritionFY[attritionFY.length - 1]
-  const prevAttrition = attritionFY[attritionFY.length - 2]
+  const prevHc = hcGranular[hcGranular.length - 2]
+  const latestUtil = utilGranular[utilGranular.length - 1]
+  const prevUtil = utilGranular[utilGranular.length - 2]
+  const latestSl = slGranular[slGranular.length - 1]
+  const prevSl = slGranular[slGranular.length - 2]
+  const latestAttrition = attritionGranular[attritionGranular.length - 1]
+  const prevAttrition = attritionGranular[attritionGranular.length - 2]
   const latestCpf = cpfFY[cpfFY.length - 1]
 
   return {
     staffing: {
       value: latestHc?.adherence ?? 0,
-      period: latestHcFY?.period, prevPeriod: prevHcFY?.period, yoyPct: yoyPct(latestHcFY?.adherence, prevHcFY?.adherence),
+      period: latestHc?.period, prevPeriod: prevHc?.period, yoyPct: yoyPct(latestHc?.adherence, prevHc?.adherence),
     },
     utilization: {
       actual: latestUtil?.actual ?? 0, target: latestUtil?.target ?? 0,
       period: latestUtil?.period, prevPeriod: prevUtil?.period, yoyPct: yoyPct(latestUtil?.actual, prevUtil?.actual),
     },
     sl: {
-      actual: latestSl?.slPct ?? 0, target: latestSl ? BASE_SL_TARGET[latestSl.period] : 0,
+      // BASE_SL_TARGET is keyed by bare FY ("FY27"), but latestSl.period may now be a
+      // granular label ("FY27 Q1") — the first 4 characters are always the FY, same
+      // convention periodsForGranularity() already relies on (p.slice(0,4)).
+      actual: latestSl?.slPct ?? 0, target: latestSl ? BASE_SL_TARGET[latestSl.period.slice(0, 4)] : 0,
       period: latestSl?.period, prevPeriod: prevSl?.period, yoyPct: yoyPct(latestSl?.slPct, prevSl?.slPct),
     },
     casesPerFte: {
       actual: latestCpf?.actual ?? 0, plan: latestCpf?.plan ?? 0, period: latestCpf?.period,
     },
     attrition: {
-      actual: latestAttrition?.attrition ?? 0, target: latestAttrition ? BASE_ATTRITION_TARGET[latestAttrition.period] : 0,
+      actual: latestAttrition?.attrition ?? 0, target: latestAttrition ? BASE_ATTRITION_TARGET[latestAttrition.period.slice(0, 4)] : 0,
       period: latestAttrition?.period, prevPeriod: prevAttrition?.period, yoyPct: yoyPct(latestAttrition?.attrition, prevAttrition?.attrition),
     },
   }

@@ -123,7 +123,7 @@ App
 ```
 TsaForecastingPage
 ├── TsaFilterPanel        — Controlled: filters state lifted to TsaForecastingPage
-├── TsaMetricCards(filters) — tsaCardData(filters) recomputed on every change
+├── TsaMetricCards(filters, granularity) — tsaCardData(filters, granularity) recomputed on every change
 │   └── DrillDownModal     — Popup (TsaChartKit's Modal), one of TotalQueuesSection/AsuTrendChart/
 │                            SrDbOspChart/CpasuChart/CurrentUcrChart; closing it only clears local
 │                            `active` state, filters prop is untouched
@@ -228,7 +228,11 @@ TsaCapacityPage
 │                                                         worst |variance| first, value-labeled
 ├── WorkloadDistributionLayer(filters, granularity) — badge "03"
 │   ├── Visual1 "Workload Distribution" (renamed) — recharts Sankey: workloadSankey(filters, mode), LOB/CQN BinaryToggle
-│   │                                                (LOB mode: CQN tiers→real LOBs; CQN mode: LOB tiers→real TSA queues)
+│   │                                                (LOB mode: CQN tiers→real LOBs; CQN mode: LOB tiers→real TSA queues);
+│   │                                                node hover (2026-07-20) shows every connected node on the other side
+│   │                                                with value + % of the hovered node's own total (nodeHoverSummary(),
+│   │                                                fixed top-right panel) — separate from the existing link-hover Tooltip,
+│   │                                                which still shows one single flow at a time
 │   ├── Visual2 "Average Case Time Variance" (renamed, repointed) — ComposedChart: actHrsByFY(filters, granularity)
 │   │                                                                bars + Adherence % line + actHrsDefaulterLobs list
 │   └── Visual3 "ACT Trend — Actual vs Plan" — LineChart: actHrsByFY(filters, granularity), now also with an
@@ -430,12 +434,18 @@ cardData(filters) → {
                                                    accuracy >= 89 (tight on purpose — lands the
                                                    headline around 40-50%, not the ~75-80% a
                                                    looser threshold would give)
-  callVolume, dbOspSplit                        — from filterQueues(filters), scaled off a
+  callVolume                                    — from filterQueues(filters), scaled off a
                                                    285.4K/268.7K baseline by the filtered-vs-total-
                                                    active-queue ratio (DB/OSP genuinely scopes volume
                                                    here); the ratio's denominator is
                                                    ACTIVE_QUEUES.length, not a hardcoded count, so it
                                                    tracks whatever the active roster currently is
+  dbOspSplit (2026-07-20 fix)                   — ALWAYS from filterQueues({...filters, dbOsp:'All'}),
+                                                   never the toggle-narrowed rows (that was circular —
+                                                   filtered to "DB", every remaining row is DB, so it
+                                                   always reported 100%/0%); summed by each queue's real
+                                                   `offered` volume, not queue count, matching the card's
+                                                   own "Offered volume" sublabel
 }
 ```
 
@@ -607,12 +617,14 @@ geoAdherenceByRegion(filters) — averages adherence across filterLobs(filters) 
 
 ### Cards
 ```
-tsaCardData(filters) → { totalQueues, asuActuals, srActuals, cpasu, currentUcr }, each the
-  latest-FY snapshot (asu[asu.length-1] etc.) off the selector functions above, except totalQueues
-  ({ active, inactive } = TSA_ACTIVE_QUEUE_NAMES.length/TSA_INACTIVE_QUEUE_NAMES.length), which
-  ignores filters entirely. asuActuals/srActuals/cpasu additionally carry { period, prevPeriod,
-  yoyPct } — yoyPct is the % change vs the prior in-scope FY (null if there isn't one), backing
-  each card's "YTD <period>: ... vs <prevPeriod>" sub-message.
+tsaCardData(filters, granularity) → { totalQueues, asuActuals, srActuals, cpasu, currentUcr }, each the
+  latest-period snapshot (asu[asu.length-1] etc., where asu = asuByFY(filters, granularity)) off the
+  selector functions above, except totalQueues ({ active, inactive } = TSA_ACTIVE_QUEUE_NAMES.length/
+  TSA_INACTIVE_QUEUE_NAMES.length), which ignores filters entirely. asuActuals/srActuals/cpasu
+  additionally carry { period, prevPeriod, yoyPct } — yoyPct is the % change vs the prior in-scope
+  period AT WHATEVER GRANULARITY THE PAGE IS SET TO (2026-07-20 fix — previously always ignored
+  granularity and compared FY-over-FY regardless of the toggle), null if there isn't a prior period,
+  backing each card's "YTD <period>: ... vs <prevPeriod>" sub-message.
 ```
 
 ---
@@ -670,8 +682,9 @@ cpfByFY(filters, granularity)              — {period, actual, plan} — Cases 
                                               replaced Total FTE 2026-07-03)
 capacityCardData(filters, granularity)     — {staffing, utilization, sl, casesPerFte, attrition}. staffing/utilization/
                                               sl/attrition each carry {value/actual, period, prevPeriod, yoyPct} —
-                                              headline value drills with granularity, yoyPct is always FY-over-FY (same
-                                              split as tsaCardData). casesPerFte carries only {actual, plan, period} —
+                                              both the headline value AND yoyPct now drill with granularity (2026-07-20,
+                                              superseding the prior always-FY-over-FY design; reuses each metric's own
+                                              granular selector for the prior-period comparison). casesPerFte carries only {actual, plan, period} —
                                               no prevPeriod/yoyPct, since its card is YTD-only by design (no comparison
                                               shown, see design_choice.md)
 GEO_CAPACITY_BY_REGION / geoCapacityByRegion(filters) — {region, fulfillmentPct, slPct}
@@ -716,9 +729,12 @@ actHrsDefaulterLobs(filters, count=6)     — {lob, actual, plan, delta} sorted 
   target ACT, backing the "top LOBs above target" list under both Workload Distribution ACT visuals
 geoSloByRegion() / TSA_GEO_SLO_BY_REGION  — {region, slo} × 4 — backs the SLO % card's region-breakdown modal + TsaCapacityGeoMap Region view
 geoSloBySubRegion() / TSA_GEO_SLO_BY_SUBREGION — {subRegion, slo} × 24 real SUB_REGIONS values — TsaCapacityGeoMap Sub-region view
+sloByFY(filters, granularity)             — {period, actual, target} — granular Global SLO trend (2026-07-20, added
+  so the card headline's comparison can be granularity-aware; both fields rate-expanded)
 tsaCapacityCardData(filters, granularity) — {totalFte, attrition, casesPerFte, avgCaseTime, globalSlo}. totalFte/
-  attrition/avgCaseTime/globalSlo each carry {actual, period, prevPeriod, yoyPct} (headline drills with granularity,
-  yoyPct always FY-over-FY); globalSlo additionally carries regionsAtRisk; casesPerFte is unchanged ({actual, plan} only)
+  attrition/avgCaseTime/globalSlo each carry {actual, period, prevPeriod, yoyPct} — both the headline value AND yoyPct
+  now drill with granularity (2026-07-20, superseding the prior always-FY-over-FY design); globalSlo additionally
+  carries regionsAtRisk; casesPerFte is unchanged ({actual, plan} only)
 tsaPlanOverPlanByDimension(filters, dimension) — {key, plan1, plan2, variance} × regions or sub-regions — Plan over
   Plan Variation layer's MainChart default view
 tsaPlanOverPlanTrendByDimension(filters, key, dimension, granularity) — {period, plan1, plan2, variance} — FY/granularity

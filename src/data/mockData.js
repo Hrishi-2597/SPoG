@@ -375,12 +375,23 @@ export function cardData(filters = {}) {
   // Call volume, by contrast, is exactly what DB/OSP is meant to scope.
   const volumeRows = filterQueues(filters)
   const ratio = total ? volumeRows.length / total : 0
-  const dbCount = volumeRows.filter(q => q.dbOsp === 'DB').length
-  // With zero rows in scope there's no split to report — 0/0, not a misleading 0/100.
-  const dbPct = volumeRows.length ? Math.round((dbCount / volumeRows.length) * 100) : 0
-  const ospPct = volumeRows.length ? 100 - dbPct : 0
   const offered = Math.round(BASE_CALL_VOLUME.offered * ratio)
   const handled = Math.round(BASE_CALL_VOLUME.handled * ratio)
+
+  // DB/OSP Split is a breakdown of the SAME offered volume by channel — always computed
+  // against the full population (dbOsp forced to 'All'), never narrowed by the dbOsp pill
+  // itself. Narrowing first and then asking "what % is DB" is circular: filtered to DB,
+  // every remaining row IS DB, so it always reported a meaningless 100%/0% (or 0%/100%
+  // for OSP) instead of the actual channel mix. It's also weighted by each queue's real
+  // `offered` volume, not a flat per-queue count — the card's own sublabel is "Offered
+  // volume", and DB/OSP queues don't carry identical average volume, so a volume-weighted
+  // split is the metric the label actually promises.
+  const splitRows = filterQueues({ ...filters, dbOsp: 'All' })
+  const splitTotalVol = splitRows.reduce((s, q) => s + q.offered, 0)
+  const splitDbVol = splitRows.filter(q => q.dbOsp === 'DB').reduce((s, q) => s + q.offered, 0)
+  // With zero rows in scope there's no split to report — 0/0, not a misleading 0/100.
+  const dbPct = splitTotalVol ? Math.round((splitDbVol / splitTotalVol) * 100) : 0
+  const ospPct = splitTotalVol ? 100 - dbPct : 0
 
   return {
     totalQueues: { active: activeCount, inactive: INACTIVE_QUEUE_NAMES.length },
