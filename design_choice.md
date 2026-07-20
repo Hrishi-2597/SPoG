@@ -4,6 +4,16 @@ A record of every significant design decision made, with the reasoning behind it
 
 ---
 
+## Geo Maps: Click-to-Spotlight a Region, Dim the Rest (2026-07-20)
+
+**Decision:** Clicking a region/sub-region on any of the 4 Geo Maps (or its row in the table below) sets it as the sole "selected" area — full opacity + accent border — while every other region drops to ~10% fill-opacity. Re-clicking the same one, a "Clear" link, or switching Region/Sub-region view clears the selection back to showing everything at full weight.
+
+**Why:** Requested directly — "Allow clicking on a region to highlight only the selected area instead of showing all regions together." All 4 maps previously had zero click interaction (hover-only tooltips), so this is new behavior added consistently to all 4 rather than a rework of an existing one.
+
+**Why dim instead of hide:** Fully hiding non-selected regions (fill → transparent/background color) would make the map look broken/empty rather than "spotlighted," and would lose the at-a-glance context of how the selected region compares to its neighbors. A heavy but non-zero opacity (0.1) keeps the geography outlines visible as context while making unmistakably clear which one is selected.
+
+**Why clear on Region/Sub-region toggle but not on the metric toggle (MsgCapacityGeoMap):** Region and Sub-region views key off entirely different name sets (`regionForCountry` vs `subRegionForCountry`) — a selection made in one view wouldn't correspond to anything meaningful in the other, so keeping it would either silently show nothing selected or, worse, coincidentally match an unrelated area with the same name. The Headcount/SL% metric toggle only changes which value colors the same set of regions, so keeping the selection across that toggle is the more useful default (compare the same region's two metrics back to back).
+
 ## Card Insight Popup: Removed `overflow: hidden` from `.card-panel` (2026-07-20)
 
 **Decision:** Dropped `overflow: hidden` from `.card-panel`'s CSS rather than reworking the popup to render outside the card (e.g. via a portal).

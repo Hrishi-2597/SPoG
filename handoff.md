@@ -1,5 +1,12 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
+## Geo Maps: Click a Region to Spotlight It (2026-07-20)
+
+- **All 4 Geo Maps** (`Layer3GeoMap.jsx`, `TsaGeoMap.jsx`, `MsgCapacityGeoMap.jsx`, `TsaCapacityGeoMap.jsx`) previously showed every region/sub-region colored at full weight simultaneously, with hover-only tooltips and no way to isolate one. Clicking a region/sub-region (on the map OR its row in the summary table below) now spotlights just that one: it stays at full color/opacity with an accent-colored highlighted border, every other region dims to ~10% opacity. Click the same one again, click the "Clear" text that appears next to the subtitle, or toggle Region/Sub-region view to go back to showing everything.
+- New `selectedKey` state per map component; the summary table's rows are now clickable too (not just hover-highlighted) and bold+tint the selected row, giving two ways to select the same thing.
+- Switching Region/Sub-region view (on the 3 maps that have that toggle) clears the selection, since the two views key off different name domains (a region name wouldn't match anything in sub-region rows, or vice versa). `MsgCapacityGeoMap`'s Headcount/SL% metric toggle does NOT clear the selection — same area, just a different metric coloring it.
+- Verified with `npm run build` (clean).
+
 ## Fixed: Card Insight Popup Clipped Vertically (CLCA Cut Off) (2026-07-20)
 
 - **Bug:** after the right-alignment fix (above), the popup opened in the correct horizontal position but its bottom (the CLCA section) was still getting clipped — reported via screenshot showing "CLCA" label visible but its text cut off below.

@@ -24,6 +24,11 @@ export default function Layer3GeoMap({ filters }) {
   const [open, setOpen]         = useState(true)
   const [viewMode, setViewMode] = useState('Region')
   const [hovered, setHovered]   = useState(null)
+  // Clicking a region/sub-region on the map spotlights just that one (dims the rest)
+  // instead of showing every region at equal visual weight. Cleared by re-clicking the
+  // same one, the Clear pill, or switching Region/Sub-region (the two view modes key
+  // off different name domains, so a selection from one wouldn't map onto the other).
+  const [selectedKey, setSelectedKey] = useState(null)
   const rows = useMemo(
     () => viewMode === 'Region' ? geoRegionData(filters) : geoSubRegionRows(filters),
     [viewMode, filters]
@@ -61,7 +66,7 @@ export default function Layer3GeoMap({ filters }) {
               clca="Target forecasting model updates at the lowest-adherence sub-regions first." />
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 10 }}>
               <span style={{ color: viewMode === 'Sub-region' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 500 }}>Sub-region</span>
-              <button onClick={() => setViewMode(v => v === 'Region' ? 'Sub-region' : 'Region')}
+              <button onClick={() => { setViewMode(v => v === 'Region' ? 'Sub-region' : 'Region'); setSelectedKey(null) }}
                 style={{ position: 'relative', display: 'inline-flex', alignItems: 'center',
                   width: 36, height: 19, borderRadius: 10,
                   background: viewMode === 'Region' ? 'var(--accent)' : 'var(--bg-inset)',
@@ -77,6 +82,11 @@ export default function Layer3GeoMap({ filters }) {
           <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>Global Adherence Heatmap</p>
           <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
             Forecast adherence % · {viewMode} view
+            {selectedKey && (
+              <> · Showing <strong style={{ color: 'var(--accent)' }}>{selectedKey}</strong>{' '}
+                <span onClick={() => setSelectedKey(null)} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>
+              </>
+            )}
           </p>
 
           {/* Legend */}
@@ -151,13 +161,17 @@ export default function Layer3GeoMap({ filters }) {
 
                     const fill = accuracy != null ? acColor(accuracy) : DEFAULT_FILL
                     const hoverFill = accuracy != null ? acColor(accuracy) : '#1a3050'
+                    const isSelected = selectedKey != null && displayName === selectedKey
+                    const isDimmed = selectedKey != null && !isSelected
+                    const baseOpacity = isFallback ? 0.35 : 1
                     return (
                       <Geography key={geo.rsmKey} geography={geo}
                         onMouseEnter={() => accuracy != null && setHovered({ name: displayName, accuracy })}
                         onMouseLeave={() => setHovered(null)}
+                        onClick={() => accuracy != null && setSelectedKey(prev => prev === displayName ? null : displayName)}
                         style={{
-                          default: { fill, fillOpacity: isFallback ? 0.35 : 1, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none', transition: 'fill 0.2s', cursor: accuracy != null ? 'pointer' : 'default' },
-                          hover:   { fill: hoverFill, fillOpacity: isFallback ? 0.55 : 0.8, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none' },
+                          default: { fill, fillOpacity: isDimmed ? 0.1 : baseOpacity, stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none', transition: 'fill-opacity 0.2s, stroke 0.2s', cursor: accuracy != null ? 'pointer' : 'default' },
+                          hover:   { fill: hoverFill, fillOpacity: isDimmed ? 0.25 : (isFallback ? 0.55 : 0.8), stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none' },
                           pressed: { fill: hoverFill, outline: 'none' },
                         }}
                       />
@@ -192,11 +206,13 @@ export default function Layer3GeoMap({ filters }) {
                   const col = acColor(m.accuracy)
                   const status = m.accuracy >= 90 ? 'Excellent' : m.accuracy >= 80 ? 'Good' : m.accuracy >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = m.accuracy >= 90 ? 'badge-good' : m.accuracy >= 80 ? 'badge-good' : m.accuracy >= 70 ? 'badge-warn' : 'badge-bad'
+                  const isSelected = selectedKey === m.label
                   return (
-                    <tr key={m.label} style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{m.label}</td>
+                    <tr key={m.label} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', background: isSelected ? 'rgba(56,189,248,0.1)' : 'transparent' }}
+                      onClick={() => setSelectedKey(prev => prev === m.label ? null : m.label)}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(56,189,248,0.04)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: isSelected ? 700 : 500 }}>{m.label}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{m.accuracy}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}>
                         <span className={`badge ${badgeCls}`}>{status}</span>

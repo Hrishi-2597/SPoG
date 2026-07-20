@@ -30,6 +30,10 @@ export default function TsaCapacityGeoMap({ filters }) {
   const [open, setOpen] = useState(true)
   const [viewMode, setViewMode] = useState('Region')
   const [hovered, setHovered] = useState(null)
+  // Clicking a region/sub-region spotlights just that one (dims the rest). Cleared by
+  // re-clicking it, the Clear pill, or switching Region/Sub-region view (different key
+  // domains).
+  const [selectedKey, setSelectedKey] = useState(null)
   const regionRows = useMemo(() => geoSloByRegion(filters), [filters])
   const subRegionRows = useMemo(() => geoSloBySubRegion(filters), [filters])
   const regionValue = useMemo(() => Object.fromEntries(regionRows.map(r => [r.region, r.slo])), [regionRows])
@@ -52,11 +56,16 @@ export default function TsaCapacityGeoMap({ filters }) {
             <GraphInsightButton
               rca="SLO lags in the same regions/sub-regions that also show above-plan ACT."
               clca="Tie SLO recovery plans to Average Case Time improvement first in those regions." />
-            <BinaryToggle leftLabel="Region" rightLabel="Sub-region" value={viewMode} onChange={setViewMode} />
+            <BinaryToggle leftLabel="Region" rightLabel="Sub-region" value={viewMode} onChange={v => { setViewMode(v); setSelectedKey(null) }} />
           </div>
           <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>Worldwide SLO Heatmap</p>
           <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
             Service Level % · {viewMode} view
+            {selectedKey && (
+              <> · Showing <strong style={{ color: 'var(--accent)' }}>{selectedKey}</strong>{' '}
+                <span onClick={() => setSelectedKey(null)} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>
+              </>
+            )}
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -106,13 +115,17 @@ export default function TsaCapacityGeoMap({ filters }) {
                       }
                     }
                     const fill = slo != null ? sloColor(slo) : DEFAULT_FILL
+                    const isSelected = selectedKey != null && displayName === selectedKey
+                    const isDimmed = selectedKey != null && !isSelected
+                    const baseOpacity = isFallback ? 0.35 : 1
                     return (
                       <Geography key={geo.rsmKey} geography={geo}
                         onMouseEnter={() => slo != null && setHovered({ name: displayName, slo })}
                         onMouseLeave={() => setHovered(null)}
+                        onClick={() => slo != null && setSelectedKey(prev => prev === displayName ? null : displayName)}
                         style={{
-                          default: { fill, fillOpacity: isFallback ? 0.35 : 1, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none', transition: 'fill 0.2s', cursor: slo != null ? 'pointer' : 'default' },
-                          hover:   { fill, fillOpacity: isFallback ? 0.55 : 0.8, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none' },
+                          default: { fill, fillOpacity: isDimmed ? 0.1 : baseOpacity, stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none', transition: 'fill-opacity 0.2s, stroke 0.2s', cursor: slo != null ? 'pointer' : 'default' },
+                          hover:   { fill, fillOpacity: isDimmed ? 0.25 : (isFallback ? 0.55 : 0.8), stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none' },
                           pressed: { fill, outline: 'none' },
                         }}
                       />
@@ -144,11 +157,13 @@ export default function TsaCapacityGeoMap({ filters }) {
                   const col = sloColor(r.slo)
                   const status = r.slo >= 90 ? 'Excellent' : r.slo >= 80 ? 'Good' : r.slo >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = r.slo >= 80 ? 'badge-good' : r.slo >= 70 ? 'badge-warn' : 'badge-bad'
+                  const isSelected = selectedKey === r.key
                   return (
-                    <tr key={r.key} style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{r.key}</td>
+                    <tr key={r.key} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', background: isSelected ? 'rgba(56,189,248,0.1)' : 'transparent' }}
+                      onClick={() => setSelectedKey(prev => prev === r.key ? null : r.key)}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(56,189,248,0.04)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: isSelected ? 700 : 500 }}>{r.key}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{r.slo}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}><span className={`badge ${badgeCls}`}>{status}</span></td>
                     </tr>

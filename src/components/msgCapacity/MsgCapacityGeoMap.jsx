@@ -33,6 +33,10 @@ export default function MsgCapacityGeoMap({ filters }) {
   const [metric, setMetric] = useState('Headcount')
   const [viewMode, setViewMode] = useState('Region')
   const [hovered, setHovered] = useState(null)
+  // Clicking a region/sub-region spotlights just that one (dims the rest). Cleared by
+  // re-clicking it, the Clear pill, or switching Region/Sub-region view (different key
+  // domains). Persists across the Headcount/SL% metric toggle — same area, different metric.
+  const [selectedKey, setSelectedKey] = useState(null)
 
   const metricKey = metric === 'Headcount' ? 'fulfillmentPct' : 'slPct'
   const regionRows = useMemo(() => geoCapacityByRegion(filters), [filters])
@@ -62,10 +66,15 @@ export default function MsgCapacityGeoMap({ filters }) {
               <BinaryToggle leftLabel="Headcount" rightLabel="SL%" value={metric} onChange={setMetric} />
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center', flex: 1 }}>Global Region Performance Overview</p>
-            <BinaryToggle leftLabel="Region" rightLabel="Sub-region" value={viewMode} onChange={setViewMode} />
+            <BinaryToggle leftLabel="Region" rightLabel="Sub-region" value={viewMode} onChange={v => { setViewMode(v); setSelectedKey(null) }} />
           </div>
           <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 10 }}>
             {metric === 'Headcount' ? 'Headcount fulfillment %' : 'Service Level %'} · {viewMode} view
+            {selectedKey && (
+              <> · Showing <strong style={{ color: 'var(--accent)' }}>{selectedKey}</strong>{' '}
+                <span onClick={() => setSelectedKey(null)} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>
+              </>
+            )}
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -115,13 +124,17 @@ export default function MsgCapacityGeoMap({ filters }) {
                       }
                     }
                     const fill = value != null ? vColor(value) : DEFAULT_FILL
+                    const isSelected = selectedKey != null && displayName === selectedKey
+                    const isDimmed = selectedKey != null && !isSelected
+                    const baseOpacity = isFallback ? 0.35 : 1
                     return (
                       <Geography key={geo.rsmKey} geography={geo}
                         onMouseEnter={() => value != null && setHovered({ name: displayName, value })}
                         onMouseLeave={() => setHovered(null)}
+                        onClick={() => value != null && setSelectedKey(prev => prev === displayName ? null : displayName)}
                         style={{
-                          default: { fill, fillOpacity: isFallback ? 0.35 : 1, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none', transition: 'fill 0.2s', cursor: value != null ? 'pointer' : 'default' },
-                          hover:   { fill, fillOpacity: isFallback ? 0.55 : 0.8, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none' },
+                          default: { fill, fillOpacity: isDimmed ? 0.1 : baseOpacity, stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none', transition: 'fill-opacity 0.2s, stroke 0.2s', cursor: value != null ? 'pointer' : 'default' },
+                          hover:   { fill, fillOpacity: isDimmed ? 0.25 : (isFallback ? 0.55 : 0.8), stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none' },
                           pressed: { fill, outline: 'none' },
                         }}
                       />
@@ -153,11 +166,13 @@ export default function MsgCapacityGeoMap({ filters }) {
                   const col = vColor(r.value)
                   const status = r.value >= 90 ? 'Excellent' : r.value >= 80 ? 'Good' : r.value >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = r.value >= 80 ? 'badge-good' : r.value >= 70 ? 'badge-warn' : 'badge-bad'
+                  const isSelected = selectedKey === r.key
                   return (
-                    <tr key={r.key} style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{r.key}</td>
+                    <tr key={r.key} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', background: isSelected ? 'rgba(56,189,248,0.1)' : 'transparent' }}
+                      onClick={() => setSelectedKey(prev => prev === r.key ? null : r.key)}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(56,189,248,0.04)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: isSelected ? 700 : 500 }}>{r.key}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{r.value}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}><span className={`badge ${badgeCls}`}>{status}</span></td>
                     </tr>

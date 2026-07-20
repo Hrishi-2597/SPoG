@@ -463,3 +463,16 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Removed `overflow: hidden` from `.card-panel` in `index.css`; confirmed nothing else in the card relies on it (the top glow `::before` bar and bottom active-state bar are both already inset within the card's width)
 - Verified with `npm run build` (clean)
 - Updated `handoff.md`, `design_choice.md`; committed and pushed to `main`
+
+---
+
+## Prompt 34 — 2026-07-20
+**Input:** "Allow clicking on a region to highlight only the selected area instead of showing all regions together"
+
+**Action:**
+- All 4 Geo Maps (`Layer3GeoMap.jsx`, `TsaGeoMap.jsx`, `MsgCapacityGeoMap.jsx`, `TsaCapacityGeoMap.jsx`) previously had hover-only tooltips and no click interaction — added a `selectedKey` state to each
+- Clicking a region/sub-region on the map, or its row in the summary table, now spotlights it: full opacity + accent-colored border, every other region dims to ~10% opacity; re-clicking the same one, a new "Clear" link next to the subtitle, or switching Region/Sub-region view resets it
+- Table rows are now clickable (previously hover-highlight only) and bold+tint the selected row
+- Region/Sub-region view toggle clears the selection (different key domains); `MsgCapacityGeoMap`'s Headcount/SL% metric toggle deliberately does not (same area, different metric)
+- Verified with `npm run build` (clean)
+- Updated `handoff.md`, `design_choice.md`; committed and pushed to `main`

@@ -26,6 +26,10 @@ const LEGEND = [
 export default function TsaGeoMap({ filters }) {
   const [open, setOpen] = useState(true)
   const [hovered, setHovered] = useState(null)
+  // Clicking a region spotlights just that one (dims the rest) instead of showing
+  // every region at equal visual weight. Re-click the same region, or the Clear pill,
+  // to go back to showing all of them.
+  const [selectedKey, setSelectedKey] = useState(null)
   const rows = useMemo(() => geoAdherenceByRegion(filters), [filters])
   const accuracyByRegion = useMemo(() => Object.fromEntries(rows.map(r => [r.region, r.adherence])), [rows])
 
@@ -50,6 +54,11 @@ export default function TsaGeoMap({ filters }) {
           <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>Global LOB Adherence Heatmap</p>
           <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 2, marginBottom: 10 }}>
             Adherence % · {filters.lob?.length ? `${filters.lob.length} LOB${filters.lob.length === 1 ? '' : 's'} selected` : 'All LOBs (avg)'}
+            {selectedKey && (
+              <> · Showing <strong style={{ color: 'var(--accent)' }}>{selectedKey}</strong>{' '}
+                <span onClick={() => setSelectedKey(null)} style={{ color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>
+              </>
+            )}
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -82,13 +91,16 @@ export default function TsaGeoMap({ filters }) {
                     const region = regionForCountry(name)
                     const accuracy = region != null ? accuracyByRegion[region] : undefined
                     const fill = accuracy != null ? acColor(accuracy) : DEFAULT_FILL
+                    const isSelected = selectedKey != null && region === selectedKey
+                    const isDimmed = selectedKey != null && !isSelected
                     return (
                       <Geography key={geo.rsmKey} geography={geo}
                         onMouseEnter={() => accuracy != null && setHovered({ name: region, accuracy })}
                         onMouseLeave={() => setHovered(null)}
+                        onClick={() => accuracy != null && setSelectedKey(prev => prev === region ? null : region)}
                         style={{
-                          default: { fill, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none', transition: 'fill 0.2s', cursor: accuracy != null ? 'pointer' : 'default' },
-                          hover:   { fill, opacity: 0.8, stroke: '#070f1a', strokeWidth: 0.4, outline: 'none' },
+                          default: { fill, fillOpacity: isDimmed ? 0.1 : 1, stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none', transition: 'fill-opacity 0.2s, stroke 0.2s', cursor: accuracy != null ? 'pointer' : 'default' },
+                          hover:   { fill, fillOpacity: isDimmed ? 0.25 : 0.8, stroke: isSelected ? 'var(--accent)' : '#070f1a', strokeWidth: isSelected ? 1.5 : 0.4, outline: 'none' },
                           pressed: { fill, outline: 'none' },
                         }}
                       />
@@ -120,11 +132,13 @@ export default function TsaGeoMap({ filters }) {
                   const col = acColor(r.adherence)
                   const status = r.adherence >= 90 ? 'Excellent' : r.adherence >= 80 ? 'Good' : r.adherence >= 70 ? 'Fair' : 'Critical'
                   const badgeCls = r.adherence >= 80 ? 'badge-good' : r.adherence >= 70 ? 'badge-warn' : 'badge-bad'
+                  const isSelected = selectedKey === r.region
                   return (
-                    <tr key={r.region} style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: 500 }}>{r.region}</td>
+                    <tr key={r.region} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', background: isSelected ? 'rgba(56,189,248,0.1)' : 'transparent' }}
+                      onClick={() => setSelectedKey(prev => prev === r.region ? null : r.region)}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(56,189,248,0.04)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                      <td style={{ padding: '6px 10px 6px 0', color: 'var(--text-primary)', fontWeight: isSelected ? 700 : 500 }}>{r.region}</td>
                       <td className="num" style={{ padding: '6px 10px 6px 0', textAlign: 'right', fontWeight: 700, color: col }}>{r.adherence}%</td>
                       <td style={{ padding: '6px 0', textAlign: 'right' }}><span className={`badge ${badgeCls}`}>{status}</span></td>
                     </tr>
