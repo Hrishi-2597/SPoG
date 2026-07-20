@@ -42,14 +42,26 @@ function SankeyNode({ x, y, width, height, index, payload }) {
 // supports and what % of that LOB's volume each one represents; hover a CQN (target)
 // to see every LOB supporting it the same way. Separate from the link-hover Tooltip
 // below, which only shows one single source→target flow at a time.
-function nodeHoverSummary(payload) {
-  const isSource = payload.sourceLinks.length > 0
-  const links = isSource ? payload.sourceLinks : payload.targetLinks
-  const total = links.reduce((s, l) => s + l.value, 0)
-  const items = links
-    .map(l => ({ name: isSource ? l.target.name : l.source.name, value: l.value, pct: total ? +(l.value / total * 100).toFixed(1) : 0 }))
+//
+// 2026-07-20 crash fix: this previously read the hovered node's own `sourceLinks`/
+// `targetLinks` and treated each entry as a resolved {source,target,value} link
+// object. Reading node_modules/recharts's Sankey.js showed those arrays actually hold
+// plain LINK INDICES (numbers), not objects — `l.target.name` on a number threw
+// immediately on the first hover ("Cannot read properties of undefined"), an uncaught
+// render error that blanked the whole page. Rebuilt to filter the same flat
+// {nodes, links} object this component already builds and passes to <Sankey data=...>,
+// using the hovered node's plain `index` instead of Recharts' internal arrays.
+function nodeHoverSummary(data, nodeIndex) {
+  const isSource = data.links.some(l => l.source === nodeIndex)
+  const relevant = data.links.filter(l => (isSource ? l.source : l.target) === nodeIndex)
+  const total = relevant.reduce((s, l) => s + l.value, 0)
+  const items = relevant
+    .map(l => {
+      const otherIndex = isSource ? l.target : l.source
+      return { name: data.nodes[otherIndex]?.name ?? '', value: l.value, pct: total ? +(l.value / total * 100).toFixed(1) : 0 }
+    })
     .sort((a, b) => b.value - a.value)
-  return { name: payload.name, isSource, items, total }
+  return { name: data.nodes[nodeIndex]?.name ?? '', isSource, items, total }
 }
 
 function SankeyTip({ active, payload }) {
@@ -76,8 +88,11 @@ function Visual1({ filters }) {
   // Recharts calls this with (elementProps, type, event) for BOTH nodes and links —
   // elementProps is the same {x, y, width, height, index, payload} shape SankeyNode
   // receives for a node hover. Ignore link hovers (type === 'link'); those are handled
-  // by the existing SankeyTip via the Tooltip component instead.
-  const handleMouseEnter = (el, type) => { if (type === 'node') setHoveredNode(nodeHoverSummary(el.payload)) }
+  // by the existing SankeyTip via the Tooltip component instead. Pass the plain node
+  // `index` (a number) rather than `el.payload` (Recharts' raw node object) — see
+  // nodeHoverSummary's comment for why the payload's own sourceLinks/targetLinks
+  // can't be used directly.
+  const handleMouseEnter = (el, type) => { if (type === 'node') setHoveredNode(nodeHoverSummary(data, el.index)) }
   const handleMouseLeave = (el, type) => { if (type === 'node') setHoveredNode(null) }
   return (
     <Visual title="Workload Distribution"

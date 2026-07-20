@@ -513,6 +513,18 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 39 — 2026-07-20
+**Input:** "When I hover over sankey graph it shows blank page"
+
+**Action:**
+- Read `node_modules/recharts/es6/chart/Sankey.js`'s `computeData` more closely and found: a node's `sourceLinks`/`targetLinks` are arrays of link INDICES (plain numbers), not resolved link objects (`sourceLinks.push(i)`, dereferenced elsewhere as `links[node.sourceLinks[j]]`) — `nodeHoverSummary()` was doing `l.target.name` on what turned out to be a bare number, throwing `TypeError: Cannot read properties of undefined` on the very first node hover, an uncaught render error that blanked the whole app
+- Rewrote `nodeHoverSummary(data, nodeIndex)` to filter the flat `{nodes, links}` object already built for `<Sankey data={data}>` directly by the hovered node's plain `index`, instead of touching Recharts' internal index arrays
+- Verified with a Node smoke test against real `workloadSankey()` output (both LOB/CQN modes) — correct names/values, percentages summing to 100%, no exception; this is the first part of the whole Sankey hover feature actually verified against real data rather than reasoned about
+- Verified with `npm run build` (clean)
+- Updated `handoff.md`; committed and pushed to `main`
+
+---
+
 ## Prompt 34 — 2026-07-20
 **Input:** "Allow clicking on a region to highlight only the selected area instead of showing all regions together"
 

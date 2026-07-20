@@ -1,5 +1,13 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
+## Fixed: Sankey Hover Was Crashing the Page (Blank Screen) (2026-07-20)
+
+- **Bug:** after wiring hover through `<Sankey>`'s own `onMouseEnter`/`onMouseLeave` props (the correct mechanism, confirmed by reading Recharts' source), hovering a node blanked the entire page — reported directly ("shows blank page").
+- **Root cause, found by reading `node_modules/recharts/es6/chart/Sankey.js`'s `computeData` more closely:** a node's `sourceLinks`/`targetLinks` arrays hold plain **link indices** (numbers), not resolved link objects — confirmed at the source (`sourceLinks.push(i)`, later dereferenced as `links[node.sourceLinks[j]]`). `nodeHoverSummary()` was treating each entry as a `{source, target, value}` object and doing `l.target.name` — on a number, `l.target` is `undefined`, so `.name` threw `TypeError: Cannot read properties of undefined`, an uncaught error during render that unmounted the whole app (no error boundary).
+- **Fix:** `nodeHoverSummary(data, nodeIndex)` now takes the flat `{nodes, links}` object this component already builds for `<Sankey data={data}>` and the hovered node's plain `index` (a number, reliably provided in `nodeProps.index`), filtering `data.links` directly by `source === nodeIndex` / `target === nodeIndex` instead of touching Recharts' internal index arrays at all.
+- Verified with a Node smoke test (`workloadSankey()` + the hover-summary logic, both LOB and CQN mode, first source node and last target node) — correct names/values, percentages summing to 100%, no exception. This is the first of the Sankey hover fixes actually verified against real data rather than reasoned about; the SVG event-wiring part still can't be click-tested (no browser-automation tool this session).
+- Verified with `npm run build` (clean).
+
 ## DB/OSP Split Card: Show Only the Selected Channel's %, Not Both (2026-07-20)
 
 - **Clarified via screenshot:** the earlier fix made the split *percentage calculation* stable (66%/34%, never degenerating to 100/0) but the card still displayed BOTH numbers ("66% / 34%") regardless of which DB/OSP pill was active. The actually-wanted behavior: when scoped to DB, show only the DB number (66%); when scoped to OSP, show only the OSP number (34%); only show both together when the pill is "All".
