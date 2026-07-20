@@ -34,7 +34,7 @@ function Card({ icon, label, value, sub, trend, onClick, active, rca, clca }) {
       style={{ cursor: 'pointer', padding: 0, minHeight: 84, position: 'relative' }}>
       {(rca || clca) && (
         <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
-          <GraphInsightButton rca={rca} clca={clca} />
+          <GraphInsightButton rca={rca} clca={clca} align="right" />
         </div>
       )}
       <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>

@@ -4,6 +4,12 @@ A record of every significant design decision made, with the reasoning behind it
 
 ---
 
+## Card Insight Popup: Right-Anchored, Not Left (2026-07-20)
+
+**Decision:** `GraphInsightButton` now takes an `align` prop (`'left'`|`'right'`) instead of always anchoring its popup's left edge to the button.
+
+**Why:** Reported via screenshot — on cards, the button sits top-right, but the popup was still opening with its left edge at the button (i.e. extending further right), pushing it off the visible edge of the screen. Graphs/Geo Maps put the button top-left, where opening rightward was always fine — the bug only affected cards. Rather than hardcode a card-specific popup component, the existing shared one just gained a direction switch, defaulting to the graphs' existing behavior so nothing else had to change.
+
 ## RCA/Insights: Per-Graph "i" Button Only, Sidebar Removed (2026-07-20)
 
 **Decision:** Removed the page-level RCA/CLCA sticky sidebar entirely (all 4 pages). RCA/Insights now live exclusively on each graph/card's own "i" info-button popup (`GraphInsightButton`, built 2026-07-10).

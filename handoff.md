@@ -1,5 +1,11 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
+## Fixed: Card Insight Popup Clipped Off-Screen (2026-07-20)
+
+- **Bug:** on all 20 KPI cards, the "i" button sits at the card's top-right corner, but `GraphInsightButton`'s popup always anchored its left edge to the button (`left: 0`) — for a 220px-wide popup opening from a top-right-corner button, that pushes most of the popup off the right edge of the screen/card, clipping the RCA/CLCA text (reported via screenshot: only slivers of "RCA"/"CLCA" text visible at the right edge).
+- **Fix:** `GraphInsightButton` (`ChartKit.jsx`) takes a new optional `align` prop (`'left'` default, `'right'`) controlling whether the popup anchors via `left: 0` or `right: 0`. All 4 card files (`MetricCards.jsx`, `TsaMetricCards.jsx`, `MsgCapacityMetricCards.jsx`, `TsaCapacityMetricCards.jsx`) now pass `align="right"` so the popup opens leftward from the top-right button, staying within the card. Graphs and Geo Maps (button on the left) are untouched — still default to `align="left"`.
+- Verified with `npm run build` (clean).
+
 ## Removed the RCA/CLCA Sidebar — Per-Graph "i" Button Is Now the Only RCA/Insights Surface (2026-07-20)
 
 - **Deleted the sticky right-hand RCA/CLCA sidebar panel from all 4 pages** (`RcaClcaPanel.jsx`, `TsaRcaClcaPanel.jsx`, `MsgCapacityRcaClcaPanel.jsx`, `TsaCapacityRcaClcaPanel.jsx` — all 4 files removed entirely, no longer imported anywhere). Each page's `flex` row (main content + 220px sticky sidebar) collapsed back to a single full-width column.

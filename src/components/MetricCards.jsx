@@ -54,7 +54,7 @@ function Card({ id, icon, label, sublabel, value, sub, trend, onClick, active, r
     >
       {(rca || clca) && (
         <div style={{ position: 'absolute', top: 6, right: 8, zIndex: 2 }} onClick={e => e.stopPropagation()}>
-          <GraphInsightButton rca={rca} clca={clca} />
+          <GraphInsightButton rca={rca} clca={clca} align="right" />
         </div>
       )}
       <div style={{

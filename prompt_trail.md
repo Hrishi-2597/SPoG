@@ -440,3 +440,15 @@ Chronological log of every user prompt and the corresponding actions taken.
 - Went with the info-button option (not a flip-card animation) since it already existed and was already wired everywhere — see `design_choice.md` for the full reasoning
 - Verified with `npm run build` (clean, 1174 modules, down from 1178) and a grep sweep confirming zero remaining `RcaClcaPanel` references anywhere in `src/`
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md` with the full change set; committed and pushed to `main`
+
+---
+
+## Prompt 32 — 2026-07-20
+**Input:** Screenshot of the Call Volume card with its "i" button open, showing the RCA/CLCA popup clipped at the right edge of the screen ("RCA... Ab... ho..." visible, rest cut off)
+
+**Action:**
+- Root-caused: `GraphInsightButton`'s popup always anchored via `left: 0`, but on cards the button itself sits at the top-right corner — opening a 220px popup further right from there pushes most of it off-screen
+- Added an `align` prop (`'left'` default, `'right'`) to `GraphInsightButton` (`ChartKit.jsx`) controlling `left: 0` vs `right: 0` anchoring
+- Passed `align="right"` from all 4 card files (`MetricCards.jsx`, `TsaMetricCards.jsx`, `MsgCapacityMetricCards.jsx`, `TsaCapacityMetricCards.jsx`); left graphs/Geo Maps on the default (`align="left"`) since their button sits top-left, where opening rightward was never a problem
+- Verified with `npm run build` (clean)
+- Updated `handoff.md`, `design_choice.md`; committed and pushed to `main`

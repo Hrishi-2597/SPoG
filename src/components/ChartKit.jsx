@@ -20,7 +20,7 @@ export const C = {
 // request was explicit about keeping this small ("don't exaggerate it"). Lives in its
 // own corner (top-left) so it never collides with cornerControls (top-right), which
 // most Region/Sub-region toggles already occupy.
-export function GraphInsightButton({ rca, clca }) {
+export function GraphInsightButton({ rca, clca, align = 'left' }) {
   const [open, setOpen] = useState(false)
   if (!rca && !clca) return null
   return (
@@ -38,7 +38,8 @@ export function GraphInsightButton({ rca, clca }) {
       >i</button>
       {open && (
         <div className="chart-tooltip animate-fade-in" style={{
-          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 20, width: 220, textAlign: 'left',
+          position: 'absolute', top: 'calc(100% + 6px)', zIndex: 20, width: 220, textAlign: 'left',
+          ...(align === 'right' ? { right: 0 } : { left: 0 }),
         }}>
           {rca && (
             <>
