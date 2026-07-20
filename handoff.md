@@ -1,5 +1,13 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
+## Fixed: Sankey Node Hover Wasn't Firing At All (2026-07-20)
+
+- **Bug:** the node-hover summary added earlier the same day (below) never appeared — reported directly ("When I hover over sankey its not appearing").
+- **Root cause:** the `onMouseEnter`/`onMouseLeave` handlers were attached to the wrapping `<g>` in `SankeyNode`, not to any element with real geometry. An SVG `<g>` with no shape of its own doesn't reliably register mouse events — only its painted children do, and hover doesn't bubble up to a geometry-less parent the way click does.
+- **Fix:** moved the handlers onto a dedicated, invisible hit-area `<rect>` (the same idiom the Geo Maps already use successfully — handlers directly on the shape, e.g. `<Geography onMouseEnter=...>`, not a wrapper). The hit area is padded ~74px toward the label side (within the chart's 90px margin) so hovering the visible name text triggers it too, not just the thin colored bar. Added `pointerEvents: 'none'` to the visible `Rectangle`/`text` so they don't shadow the hit-area rect underneath.
+- Could not visually click-test this (no browser-automation tool in this environment) — the fix is based on a well-understood SVG behavior and matches this app's own working precedent, but flagging that it hasn't been confirmed in a live browser.
+- Verified with `npm run build` (clean).
+
 ## Three Fixes: DB/OSP Split, Sankey Hover, MoM/QoQ Comparisons (2026-07-20)
 
 **1. DB/OSP Split card fixed (mockData.js `cardData()`):** the split % was computed from `filterQueues(filters)` — which already applies the current DB/OSP pill — so selecting "DB" or "OSP" made every remaining row trivially match itself, always reporting 100%/0%. Now computed from a `{...filters, dbOsp: 'All'}`-scoped row set summed by each queue's real `offered` volume (not queue count), so the split stays a true, stable channel mix (verified via Node smoke test: 66%/34% across All/DB/OSP toggle positions — no more degenerate 100/0) and matches the card's own "Offered volume" sublabel, which a raw queue-count ratio never actually measured.

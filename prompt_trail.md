@@ -478,6 +478,18 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 36 — 2026-07-20
+**Input:** "When I hover over sankey its not appearing"
+
+**Action:**
+- Root-caused: `SankeyNode`'s `onMouseEnter`/`onMouseLeave` were on the wrapping `<g>`, which has no geometry of its own — SVG groups without their own shape don't reliably register hover
+- Moved the handlers onto a new invisible hit-area `<rect>` (padded ~74px toward the label side), matching the pattern already working elsewhere in this app (Geo Maps attach hover handlers directly to the shape, not a wrapper); added `pointerEvents: 'none'` to the visible Rectangle/text so they don't intercept events meant for the hit-area rect underneath
+- No browser-automation tool available this session, so this couldn't be visually click-tested — flagged to the user
+- Verified with `npm run build` (clean)
+- Updated `handoff.md`; committed and pushed to `main`
+
+---
+
 ## Prompt 34 — 2026-07-20
 **Input:** "Allow clicking on a region to highlight only the selected area instead of showing all regions together"
 

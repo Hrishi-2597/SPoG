@@ -12,9 +12,19 @@ import { C, Visual, Tip, BinaryToggle } from '../ChartKit'
 // established for the horizontal queue-bar charts elsewhere in this app.
 function SankeyNode({ x, y, width, height, index, payload, onHover, onLeave }) {
   const isSource = payload.sourceLinks.length > 0
+  // Hover handlers live on a dedicated, invisible hit-area <rect> rather than the
+  // wrapping <g> — a bare <g> has no geometry of its own and doesn't reliably register
+  // mouse events in SVG (this was the actual bug: hover silently did nothing). The hit
+  // area is padded out toward the label (which sits outside the colored bar, in the
+  // chart's 90px side margin) so hovering the visible name text triggers it too, not
+  // just the thin bar itself.
+  const hitX = isSource ? x - 74 : x
+  const hitWidth = width + 74
   return (
-    <g onMouseEnter={() => onHover?.(payload)} onMouseLeave={() => onLeave?.()} style={{ cursor: 'pointer' }}>
-      <Rectangle x={x} y={y} width={width} height={height} fill={isSource ? C.metric1 : C.metric2} fillOpacity={0.85} />
+    <g style={{ cursor: 'pointer' }}>
+      <rect x={hitX} y={y} width={hitWidth} height={height} fill="transparent"
+        onMouseEnter={() => onHover?.(payload)} onMouseLeave={() => onLeave?.()} />
+      <Rectangle x={x} y={y} width={width} height={height} fill={isSource ? C.metric1 : C.metric2} fillOpacity={0.85} style={{ pointerEvents: 'none' }} />
       <text
         textAnchor={isSource ? 'end' : 'start'}
         x={isSource ? x - 6 : x + width + 6}
@@ -22,6 +32,7 @@ function SankeyNode({ x, y, width, height, index, payload, onHover, onLeave }) {
         dy={4}
         fontSize={10}
         fill="var(--text-secondary)"
+        style={{ pointerEvents: 'none' }}
       >
         {payload.name}
       </text>
