@@ -1,11 +1,11 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
-## Fixed: Sankey Node Hover Wasn't Firing At All (2026-07-20)
+## Fixed for Real: Sankey Node Hover — Wrong Mechanism Entirely (2026-07-20)
 
-- **Bug:** the node-hover summary added earlier the same day (below) never appeared — reported directly ("When I hover over sankey its not appearing").
-- **Root cause:** the `onMouseEnter`/`onMouseLeave` handlers were attached to the wrapping `<g>` in `SankeyNode`, not to any element with real geometry. An SVG `<g>` with no shape of its own doesn't reliably register mouse events — only its painted children do, and hover doesn't bubble up to a geometry-less parent the way click does.
-- **Fix:** moved the handlers onto a dedicated, invisible hit-area `<rect>` (the same idiom the Geo Maps already use successfully — handlers directly on the shape, e.g. `<Geography onMouseEnter=...>`, not a wrapper). The hit area is padded ~74px toward the label side (within the chart's 90px margin) so hovering the visible name text triggers it too, not just the thin colored bar. Added `pointerEvents: 'none'` to the visible `Rectangle`/`text` so they don't shadow the hit-area rect underneath.
-- Could not visually click-test this (no browser-automation tool in this environment) — the fix is based on a well-understood SVG behavior and matches this app's own working precedent, but flagging that it hasn't been confirmed in a live browser.
+- **Bug:** node hover still didn't appear after the first attempted fix (custom `onHover`/`onLeave` props on `SankeyNode`, then a hit-area `<rect>` variant) — reported directly twice ("its not appearing" / "still not able to see").
+- **Actual root cause, found by reading `node_modules/recharts/es6/chart/Sankey.js` directly rather than guessing further:** Recharts' `<Sankey>` wraps every rendered node in its OWN interactive `<Layer>` internally, and only exposes node/link hover via `onMouseEnter`/`onMouseLeave` PROPS ON THE `<Sankey>` ELEMENT ITSELF — called as `(elementProps, type, event)` where `type` is `'node'` or `'link'`. Any custom prop passed to the `node={<SankeyNode .../>}` render-prop element (like the `onHover`/`onLeave` from the first fix attempt) is never read by anything — it's genuinely inert. This is why neither previous attempt worked; the mouse-event wiring was never the problem, the whole approach was targeting the wrong layer of the API.
+- **Fix:** `SankeyNode` reverted to purely presentational (no hover logic — removed the hit-area rect entirely). Hover is now wired via `onMouseEnter`/`onMouseLeave` props passed directly to `<Sankey>`, filtering to `type === 'node'` (link hovers still go through the existing `SankeyTip`/`Tooltip`, untouched).
+- Still no browser-automation tool in this environment, so this couldn't be visually click-tested — but this fix is grounded in the library's actual source rather than an assumption about SVG behavior, which is a meaningfully stronger basis for confidence than the previous two attempts.
 - Verified with `npm run build` (clean).
 
 ## Three Fixes: DB/OSP Split, Sankey Hover, MoM/QoQ Comparisons (2026-07-20)

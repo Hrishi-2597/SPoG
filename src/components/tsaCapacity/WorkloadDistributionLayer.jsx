@@ -10,21 +10,19 @@ import { C, Visual, Tip, BinaryToggle } from '../ChartKit'
 // node paints the real LOB/queue name next to it so the diagram is legible without
 // hovering every node, same "read without hovering" bar towards labeled data
 // established for the horizontal queue-bar charts elsewhere in this app.
-function SankeyNode({ x, y, width, height, index, payload, onHover, onLeave }) {
+//
+// 2026-07-20 correction: an earlier pass tried wiring hover via custom onHover/onLeave
+// props on THIS component, which did nothing — Recharts doesn't forward arbitrary
+// custom props through to a hover mechanism here. Recharts' own <Sankey> wraps every
+// node in its OWN interactive <Layer> and only exposes hover via onMouseEnter/
+// onMouseLeave PROPS ON THE <Sankey> ELEMENT ITSELF (called as (nodeOrLinkProps, type,
+// event)), confirmed by reading node_modules/recharts's Sankey.js source directly.
+// This component is back to purely presentational — no hover logic belongs here.
+function SankeyNode({ x, y, width, height, index, payload }) {
   const isSource = payload.sourceLinks.length > 0
-  // Hover handlers live on a dedicated, invisible hit-area <rect> rather than the
-  // wrapping <g> — a bare <g> has no geometry of its own and doesn't reliably register
-  // mouse events in SVG (this was the actual bug: hover silently did nothing). The hit
-  // area is padded out toward the label (which sits outside the colored bar, in the
-  // chart's 90px side margin) so hovering the visible name text triggers it too, not
-  // just the thin bar itself.
-  const hitX = isSource ? x - 74 : x
-  const hitWidth = width + 74
   return (
-    <g style={{ cursor: 'pointer' }}>
-      <rect x={hitX} y={y} width={hitWidth} height={height} fill="transparent"
-        onMouseEnter={() => onHover?.(payload)} onMouseLeave={() => onLeave?.()} />
-      <Rectangle x={x} y={y} width={width} height={height} fill={isSource ? C.metric1 : C.metric2} fillOpacity={0.85} style={{ pointerEvents: 'none' }} />
+    <g>
+      <Rectangle x={x} y={y} width={width} height={height} fill={isSource ? C.metric1 : C.metric2} fillOpacity={0.85} />
       <text
         textAnchor={isSource ? 'end' : 'start'}
         x={isSource ? x - 6 : x + width + 6}
@@ -32,7 +30,6 @@ function SankeyNode({ x, y, width, height, index, payload, onHover, onLeave }) {
         dy={4}
         fontSize={10}
         fill="var(--text-secondary)"
-        style={{ pointerEvents: 'none' }}
       >
         {payload.name}
       </text>
@@ -76,7 +73,12 @@ function Visual1({ filters }) {
   const [mode, setMode] = useState('LOB')
   const [hoveredNode, setHoveredNode] = useState(null)
   const data = useMemo(() => workloadSankey(filters, mode), [filters, mode])
-  const handleHover = payload => setHoveredNode(nodeHoverSummary(payload))
+  // Recharts calls this with (elementProps, type, event) for BOTH nodes and links —
+  // elementProps is the same {x, y, width, height, index, payload} shape SankeyNode
+  // receives for a node hover. Ignore link hovers (type === 'link'); those are handled
+  // by the existing SankeyTip via the Tooltip component instead.
+  const handleMouseEnter = (el, type) => { if (type === 'node') setHoveredNode(nodeHoverSummary(el.payload)) }
+  const handleMouseLeave = (el, type) => { if (type === 'node') setHoveredNode(null) }
   return (
     <Visual title="Workload Distribution"
       subtitle={mode === 'LOB' ? 'Illustrative CQN priority tiers routed to real LOBs' : 'Illustrative LOB priority tiers routed to real queues'}
@@ -105,10 +107,12 @@ function Visual1({ filters }) {
         <ResponsiveContainer width="100%" height={260}>
           <Sankey
             data={data}
-            node={<SankeyNode onHover={handleHover} onLeave={() => setHoveredNode(null)} />}
+            node={<SankeyNode />}
             nodePadding={22}
             margin={{ top: 8, right: 90, bottom: 8, left: 90 }}
             link={{ stroke: C.trend, strokeOpacity: 0.35 }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             <Tooltip content={<SankeyTip />} />
           </Sankey>

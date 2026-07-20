@@ -490,6 +490,18 @@ Chronological log of every user prompt and the corresponding actions taken.
 
 ---
 
+## Prompt 37 — 2026-07-20
+**Input:** "still not able to see"
+
+**Action:**
+- The hit-area-rect fix from the prior prompt still didn't work — stopped guessing and read `node_modules/recharts/es6/chart/Sankey.js` directly
+- Found the actual mechanism: Recharts wraps every node in its own internal `<Layer>` and only exposes hover via `onMouseEnter`/`onMouseLeave` props on the `<Sankey>` element itself (called as `(elementProps, type, event)`) — custom props passed to the `node={<SankeyNode/>}` render-prop element are never read for hover purposes, so both prior attempts were targeting an API surface that doesn't do anything
+- Reverted `SankeyNode` to purely presentational; wired `handleMouseEnter`/`handleMouseLeave` as top-level `onMouseEnter`/`onMouseLeave` props on `<Sankey>`, filtering to `type === 'node'` (confirmed via source that `this.props.onMouseEnter`/`onMouseLeave` are read directly, not filtered)
+- Verified with `npm run build` (clean); flagged again that this couldn't be visually click-tested (no browser-automation tool this session), but confidence is now grounded in the library's actual source rather than an assumption
+- Updated `handoff.md`; committed and pushed to `main`
+
+---
+
 ## Prompt 34 — 2026-07-20
 **Input:** "Allow clicking on a region to highlight only the selected area instead of showing all regions together"
 
