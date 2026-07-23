@@ -564,4 +564,15 @@ Chronological log of every user prompt and the corresponding actions taken.
 - All 4 agents deliberately left every existing `rca=`/`clca=` prop on graphs/visuals/geo maps untouched — only the 20 KPI cards (5 per page × 4 pages) lost RCA/CLCA.
 - Verified with `npm run build` (clean, 1174 modules) after all 4 agents completed; grepped all 4 card files to confirm zero remaining `rca=`/`clca=` occurrences.
 - Updated `handoff.md`, `tech_spec.md`, `design_choice.md`; committed and pushed to `main`.
+
+---
+
+## Prompt 42 — 2026-07-23
+**Input:** "In MSG Capacity Plan tab - In headcount and SL% LAYER for headcount impact on SL%. under plan use the same plans we used for actual vs plan variation. use the same plans for recently added dropdowns for other graphs as well."
+
+**Action:**
+- Found the inconsistency: "Actual vs Plan Variation" (`HeadcountLayer.jsx` Visual1, pre-existing) uses `PLAN_NAMES`; all 5 dropdowns added earlier today on this page ("Headcount Impact on SL", Plan over Plan Variation + Queues with Highest Variation's shared Plan A/Plan B, and each of the 3 Utilization and Outage Analysis graphs) had used `CAPACITY_PLAN_NAMES` instead — a different real plan-name list.
+- Switched all 5 to `PLAN_NAMES` (`HeadcountLayer.jsx` Visual3, `UtilizationLayer.jsx` Visual1/2/3, `PlanOverPlanVariationLayer.jsx`'s shared `PLANS` constant) — confirmed no data-layer change was needed since `planMultiplier()` hashes whatever plan-name string it's given rather than assuming a specific list.
+- Verified with `npm run build` (clean, 1174 modules); grepped `msgCapacity/` for stray `CAPACITY_PLAN_NAMES` code references — none remain.
+- Updated `handoff.md`; committed and pushed to `main`.
 - Updated `handoff.md`, `design_choice.md`; committed and pushed to `main`

@@ -1,5 +1,12 @@
 # Project Handoff — TSG SPoG MSG Forecasting Dashboard
 
+## MSG Capacity Plan: All Recently-Added Plan Dropdowns Now Use One Consistent Plan List (2026-07-23)
+
+- **Follow-up to the same-day cross-page sweep below** — the 5 Plan dropdowns added to MSG Capacity Plan (Headcount Impact on SL; Plan over Plan Variation + Queues with Highest Variation's shared Plan A/Plan B; each of the 3 Utilization and Outage Analysis graphs) were built using `CAPACITY_PLAN_NAMES` (`Actual`/`Dec Plan`/`Jan Plan`/`April Plan`), while "Actual vs Plan Variation" (`HeadcountLayer.jsx` Visual1) — the pre-existing dropdown they were meant to be consistent with — actually uses `PLAN_NAMES` (`AOP_FY26Q4_AA`/`FY27 Q1 APR Plan`/`FY27 Q2 JUN Plan`/`FY27Q1_AA`), a different real plan-name list defined in `mockData.js`.
+- **Fixed:** all 5 dropdowns' `options` (and their default `useState` values) switched from `CAPACITY_PLAN_NAMES` to `PLAN_NAMES`, so every Plan picker on this page — old and new — now offers the exact same 4 choices. `PlanOverPlanVariationLayer.jsx`'s local `PLANS` constant dropped its `.filter(p => p !== 'Actual')` (no longer needed — `PLAN_NAMES` has no `'Actual'` entry to filter out).
+- **No data-layer changes needed:** `planMultiplier(planName)` (`msgCapacityData.js`) is a generic hash-over-the-string function, not hardcoded to `CAPACITY_PLAN_NAMES` — it produces a valid deterministic multiplier for any plan name, including every `PLAN_NAMES` entry, so every selector extended earlier today (`slTrendByFY`, `slDefaulterQueues`, `planOverPlanByDimension`/`planOverPlanTrendByDimension`/`planOverPlanQueueVariance`, `utilizationByFY`/`utilizationByQueue`/`leavesByQueue`) keeps working unchanged; only the UI-layer dropdown options list needed to change.
+- Verified with `npm run build` (clean, 1174 modules); grepped `src/components/msgCapacity/` to confirm zero remaining code references to `CAPACITY_PLAN_NAMES` (only explanatory comments mention it now).
+
 ## Cross-Page Sweep: Renames, Real Plan Dropdowns, RCA/CLCA Off Cards, New "What This Shows" Info Buttons (2026-07-23)
 
 A large request spanning all 4 pages, done as one shared-infra change plus 4 parallel per-page passes (MSG Forecasting, MSG Capacity Plan, TSA Forecasting, TSA Capacity Plan — disjoint files, no conflicts).

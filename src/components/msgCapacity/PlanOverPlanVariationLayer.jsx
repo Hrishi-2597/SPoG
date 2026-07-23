@@ -3,17 +3,17 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceLine, Cell, LabelList,
 } from 'recharts'
-import { CAPACITY_PLAN_NAMES } from '../../data/mockData'
+import { PLAN_NAMES } from '../../data/mockData'
 import {
   planOverPlanByDimension, planOverPlanTrendByDimension, planOverPlanQueueVariance,
 } from '../../data/msgCapacityData'
 import { C, Visual, Tip, BinaryToggle, PillButton, CategoryTick, PlanDropdowns } from '../ChartKit'
 
-// Real, user-selectable Plan A/Plan B (2026-07-23) — 'Actual' is filtered out of the
-// pickers the same way Forecasting's own Plan A/B dropdowns exclude it (see
-// CAPACITY_PLAN_NAMES's own comment in mockData.js), since comparing a plan against
-// itself-as-actual isn't a meaningful plan-over-plan choice here.
-const PLANS = CAPACITY_PLAN_NAMES.filter(p => p !== 'Actual')
+// Real, user-selectable Plan A/Plan B (2026-07-23) — uses the same PLAN_NAMES list as
+// Headcount and SL%'s "Actual vs Plan Variation" dropdown (2026-07-23 follow-up — was
+// CAPACITY_PLAN_NAMES, switched so every recently-added Plan dropdown on this page
+// draws from one consistent list).
+const PLANS = PLAN_NAMES
 
 // MSG-specific replacement for the shared capacity/PlanOverPlanLayer.jsx — this page's
 // version got its own Region/Sub-region drill and a queue-variance ranking on top of

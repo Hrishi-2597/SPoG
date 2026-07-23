@@ -3,9 +3,14 @@ import {
   ComposedChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { CAPACITY_PLAN_NAMES } from '../../data/mockData'
+import { PLAN_NAMES } from '../../data/mockData'
 import { utilizationByFY, utilizationByQueue, leavesByQueue } from '../../data/msgCapacityData'
 import { C, Visual, Tip, CategoryTick, PlanSelect } from '../ChartKit'
+
+// Same PLAN_NAMES list as Headcount and SL%'s "Actual vs Plan Variation" dropdown
+// (2026-07-23 follow-up — was CAPACITY_PLAN_NAMES, switched so every recently-added
+// Plan dropdown on this page draws from one consistent list).
+const PLANS = PLAN_NAMES
 
 // Extends the shared Tip with the top-3 Aux codes driving the gap (a shortfall can
 // genuinely be caused by more than one Aux code, so the tooltip surfaces the top 3
@@ -42,11 +47,11 @@ function UtilFyTip({ active, payload, label }) {
 // Visual3 below or with any other layer's Plan picker, per direct request that each
 // graph in this section gets its own selection.
 function Visual1({ filters, granularity }) {
-  const [plan, setPlan] = useState(CAPACITY_PLAN_NAMES[0])
+  const [plan, setPlan] = useState(PLANS[0])
   const data = useMemo(() => utilizationByFY(filters, granularity, plan), [filters, granularity, plan])
   return (
     <Visual title="Actual vs Target Utilization" subtitle="Hover a bar to see the Aux codes driving the gap"
-      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={CAPACITY_PLAN_NAMES} />}
+      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={PLANS} />}
       info="Actual vs Target utilization % over time, with an Adherence % trend line and the Aux codes driving any gap."
       rca="Utilization shortfalls trace back to a handful of recurring Aux codes."
       clca="Add an Aux-code contingency buffer for queues with recurring exposure.">
@@ -105,11 +110,11 @@ function QueueBarChart({ data, actualLabel, targetLabel, actualColor, targetColo
 // gap, worst first. Each queue now lists 2-3 contributing Aux codes, not one.
 // Own independent Plan dropdown, separate from Visual1's and Visual3's — see note above.
 function Visual2({ filters }) {
-  const [plan, setPlan] = useState(CAPACITY_PLAN_NAMES[0])
+  const [plan, setPlan] = useState(PLANS[0])
   const data = useMemo(() => utilizationByQueue(filters, 6, plan), [filters, plan])
   return (
     <Visual title="Utilization Defaulter Queues" subtitle="Worst utilization gap first"
-      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={CAPACITY_PLAN_NAMES} />}
+      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={PLANS} />}
       info="Queues with the largest gap between actual and target utilization, worst first."
       rca="These queues share the same 2-3 Aux codes as their main driver."
       clca="Target training/system-downtime fixes at the Aux codes shown here first.">
@@ -129,11 +134,11 @@ function Visual2({ filters }) {
 // Shows which queues are burning through more outage (leave) time than planned, and
 // by how much. Own independent Plan dropdown, separate from Visual1's and Visual2's.
 function Visual3({ filters }) {
-  const [plan, setPlan] = useState(CAPACITY_PLAN_NAMES[0])
+  const [plan, setPlan] = useState(PLANS[0])
   const data = useMemo(() => leavesByQueue(filters, 6, plan), [filters, plan])
   return (
     <Visual title="Outage — Actual vs Target" subtitle="Highest delta, ascending"
-      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={CAPACITY_PLAN_NAMES} />}
+      controls={<PlanSelect label="Plan" value={plan} onChange={setPlan} options={PLANS} />}
       info="Queues with the largest gap between actual and target outage, ordered by delta."
       rca="Outages cluster in a few queues rather than spreading evenly."
       clca="Add contingent staffing coverage for the queues with the largest outage gap.">
